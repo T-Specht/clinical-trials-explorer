@@ -1,0 +1,14 @@
+{
+    "NotebookApp": {
+      "nbserver_extensions": {
+        "jupyterlab": true
+      },
+      "tornado_settings": {
+        "headers": {
+          "Content-Security-Policy": "frame-ancestors * file:;",
+          "Access-Control-Allow-Origin": "* file:;"
+        }
+      }
+    }
+  }
+  
