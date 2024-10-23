@@ -1,5 +1,5 @@
 import { CustomFieldTable, EntryTable } from "@/db/schema";
-import { UIFieldType, CustomUIFieldType } from "@/lib/fields";
+import { UIFieldType } from "@/lib/fields";
 import { Input } from "../ui/input";
 import { Checkbox } from "../ui/checkbox";
 import { BotIcon, Brain, LoaderCircle, RefreshCcwIcon } from "lucide-react";

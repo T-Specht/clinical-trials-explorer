@@ -29,7 +29,7 @@ const Handle = () => <ResizableHandle withHandle className="border-2" />;
 //   isRepurpose: true,
 // });
 
-import { FIELDS } from "@/lib/fields";
+import { buildAiReturnSchemaForCustomFields, FIELDS } from "@/lib/fields";
 import EntryField from "./renderEntryField";
 import { useSettingsStore } from "@/lib/zustand";
 import EntryFilter from "../EntryFilter";
@@ -70,37 +70,17 @@ const Entry = (props: {
     queryKey: ["ai_meta", current.id, current.createdAt],
     enabled: !!openAIKey,
     queryFn: () => {
-      console.log("Requesting AI data...", current.id);
+      
 
-      let schema = z.object(
-        Object.fromEntries(
-          props.customFields.map((f) => {
-            const key = f.idName;
-            const types = {
-              string: z.string(),
-              number: z.number(),
-              boolean: z.boolean(),
-            };
-            const type = types[f.dataType];
-
-            return [
-              key,
-              z.object({
-                value: type.describe(f.aiDescription || f.description || ""),
-                explanation: z
-                  .string()
-                  .describe("shortly describe why you picked this value"),
-              }),
-            ];
-          })
-        )
-      );
+      const schema = buildAiReturnSchemaForCustomFields(props.customFields);
 
       let input = {
         title: current.title,
-        description: current.rawJson?.descriptionModule?.detailedDescription,
+        description: current.rawJson?.descriptionModule,
         intervention: current.rawJson?.armsInterventionsModule,
       };
+
+      console.log("Requesting AI data...", current.id, input);
 
       return generateMetaData(JSON.stringify(input), schema);
     },

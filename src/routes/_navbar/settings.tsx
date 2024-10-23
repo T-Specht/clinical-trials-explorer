@@ -20,9 +20,15 @@ import { useShallow } from "zustand/react/shallow";
 
 export const Route = createFileRoute("/_navbar/settings")({
   component: () => {
-    const [openAiKey, setOpenAiKey] = useSettingsStore(
-      useShallow((s) => [s.openAIKey, s.setOpenAIKey])
-    );
+    const [openAiKey, setOpenAiKey, openAIModelName, setOpenAIModelName] =
+      useSettingsStore(
+        useShallow((s) => [
+          s.openAIKey,
+          s.setOpenAIKey,
+          s.openAIModelName,
+          s.setOpenAIModelName,
+        ])
+      );
     return (
       <Container>
         <div>
@@ -34,6 +40,15 @@ export const Route = createFileRoute("/_navbar/settings")({
             onChange={(e) =>
               setOpenAiKey(e.target.value.trim() == "" ? null : e.target.value)
             }
+          ></Input>
+        </div>
+
+        <div>
+          <Label>Open AI Model Name</Label>
+          <Input
+            placeholder="gpt-4o-mini"
+            value={openAIModelName || ""}
+            onChange={(e) => setOpenAIModelName(e.target.value.trim())}
           ></Input>
         </div>
       </Container>

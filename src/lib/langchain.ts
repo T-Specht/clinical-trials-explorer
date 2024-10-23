@@ -9,13 +9,15 @@ import { useSettingsStore } from "./zustand";
 
 // import { searxng_api_search } from "./searxng_api";
 
-const MODEL = "gpt-4o-mini";
+const DEFAULT_MODEL = "gpt-4o-mini";
 
 const getModel = (temp = 0) => {
+  const { openAIKey, openAIModelName } = useSettingsStore.getState();
+
   return new ChatOpenAI({
-    modelName: MODEL,
+    modelName: openAIModelName || DEFAULT_MODEL,
     temperature: temp,
-    openAIApiKey: useSettingsStore.getState().openAIKey || "",
+    openAIApiKey: openAIKey || "",
   });
 
   //return new ChatAnthropic({});
@@ -141,34 +143,6 @@ export async function generateMetaData<T extends z.ZodRawShape>(
   input: string,
   returnSchema: z.ZodObject<T>
 ) {
-  //   const schema = z.object({
-  //     drug_name: z
-  //       .string()
-  //       .describe(
-  //         "the name of the H1 receptor antagonists / antihistamine if there was one that was looked at primarily. Possible options are cetirizine, levocetirizine, loratadine, desloratadine, fexofenadine or a combination of these. If non of these can be chosen, output 'No h1ra'. If multiple apply, list them by using |, e.g. cetirizine|loratadiine"
-  //       ),
-  //     repurpose: z
-  //       .boolean()
-  //       .describe(
-  //         "true if drug_name is used, tested or evaluated for other indications than allergy, all forms of allergic rhinitis or urticaria in this study. If in doubt, answer with true."
-  //       ),
-  //     repurpose_reasoning: z
-  //       .string()
-  //       .describe("Describe why repurpose is true or false"),
-  //     drug_role: z
-  //       .string()
-  //       .describe(
-  //         "the role of above drug in the study using the roles described below"
-  //       ),
-  //     drug_role_explanation: z
-  //       .string()
-  //       .describe("short explanation why you chose that drug role"),
-  //     usecase: z
-  //       .string()
-  //       .describe(
-  //         "the indication/use case/condition treated with the drug name above in the study. Maximum of 3 words! Whenever possible the usecase should correspond to the study title condition."
-  //       ),
-  //   });
 
   const model = getModel(0).withStructuredOutput(returnSchema).withRetry({
     stopAfterAttempt: 3,

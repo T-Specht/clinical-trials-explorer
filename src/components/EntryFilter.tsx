@@ -25,6 +25,8 @@ import { useDebounceCallback, useDebounceValue } from "usehooks-ts";
 import { useDebounce } from "@uidotdev/usehooks";
 import { diff } from "deep-object-diff";
 
+import { QueryBuilderShadcnUi } from "@/components/ui/react-querybuilder-shadcn-ui";
+
 const columns = getTableColumns(EntryTable);
 
 const FILTER_FILEDS = Promise.all(
@@ -88,21 +90,21 @@ const FILTER_FILEDS = Promise.all(
 
 const EntryFilter = (props: { showCount?: boolean }) => {
   // Will be saved debounced
-  const [globalFilter, setGlobalFilter] = useSettingsStore(
+  const [query, setQuery] = useSettingsStore(
     useShallow((s) => [s.filter, s.setFilter])
   );
 
-  const [query, setQuery] = useState(globalFilter);
-  const debouncedQuery = useDebounce(query, 500);
+  // const [query, setQuery] = useState(globalFilter);
+  // const debouncedQuery = useDebounce(query, 500);
 
-  useEffect(() => {
-    // Save to settingsStore
-    const d = diff(globalFilter, query);
-    if (Object.keys(d).length > 0) {
-      // Only save if it has changed to prevent databse query spam
-      setGlobalFilter(query);
-    }
-  }, [debouncedQuery]);
+  // useEffect(() => {
+  //   // Save to settingsStore
+  //   const d = diff(globalFilter, query);
+  //   if (Object.keys(d).length > 0) {
+  //     // Only save if it has changed to prevent databse query spam
+  //     setGlobalFilter(query);
+  //   }
+  // }, [debouncedQuery]);
 
   const { data: fields, isLoading: fieldsLoading } = useQuery({
     queryKey: ["fields"],
@@ -112,9 +114,9 @@ const EntryFilter = (props: { showCount?: boolean }) => {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ["filtered_entries_count", debouncedQuery],
+    queryKey: ["filtered_entries_count", query],
     queryFn: async () => {
-      return getNumberOfEntriesWithFilter(debouncedQuery);
+      return getNumberOfEntriesWithFilter(query);
     },
   });
 
@@ -122,11 +124,13 @@ const EntryFilter = (props: { showCount?: boolean }) => {
 
   return (
     <>
-      <QueryBuilder
-        fields={fields}
-        query={query}
-        onQueryChange={setQuery}
-      ></QueryBuilder>
+      <QueryBuilderShadcnUi>
+        <QueryBuilder
+          fields={fields}
+          query={query}
+          onQueryChange={setQuery}
+        ></QueryBuilder>
+      </QueryBuilderShadcnUi>
       {!isLoading && props.showCount && (
         <div>
           Number of database entries matching: <code>{data}</code>

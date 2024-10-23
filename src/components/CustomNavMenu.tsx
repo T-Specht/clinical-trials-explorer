@@ -62,6 +62,7 @@ export const MenuLinksGroup = (props: { className?: string }) => {
       <CustomLink to="/api_import">API Import</CustomLink>
       <CustomLink to="/jupyter">Jupyter</CustomLink>
       <CustomLink to="/pivottable">Explore</CustomLink>
+      <CustomLink to="/graphs">Graphs</CustomLink>
       <CustomLink to="/custom_fields">CF</CustomLink>
       <CustomLink to="/display_filtered_entries">Entries</CustomLink>
     </div>

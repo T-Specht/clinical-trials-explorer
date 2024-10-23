@@ -83,6 +83,7 @@ declare module "@tanstack/react-router" {
 }
 const root = createRoot(document.getElementById("root")!);
 
+
 const MainComponent = () => {
   const { isDarkMode } = useDarkMode();
 

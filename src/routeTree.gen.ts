@@ -17,6 +17,7 @@ import { Route as IndexImport } from './routes/index'
 import { Route as NavbarSettingsImport } from './routes/_navbar/settings'
 import { Route as NavbarPivottableImport } from './routes/_navbar/pivottable'
 import { Route as NavbarJupyterImport } from './routes/_navbar/jupyter'
+import { Route as NavbarGraphsImport } from './routes/_navbar/graphs'
 import { Route as NavbarCustomfieldsImport } from './routes/_navbar/custom_fields'
 import { Route as NavbarApiimportImport } from './routes/_navbar/api_import'
 
@@ -49,6 +50,11 @@ const NavbarPivottableRoute = NavbarPivottableImport.update({
 
 const NavbarJupyterRoute = NavbarJupyterImport.update({
   path: '/jupyter',
+  getParentRoute: () => NavbarRoute,
+} as any)
+
+const NavbarGraphsRoute = NavbarGraphsImport.update({
+  path: '/graphs',
   getParentRoute: () => NavbarRoute,
 } as any)
 
@@ -101,6 +107,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NavbarCustomfieldsImport
       parentRoute: typeof NavbarImport
     }
+    '/_navbar/graphs': {
+      id: '/_navbar/graphs'
+      path: '/graphs'
+      fullPath: '/graphs'
+      preLoaderRoute: typeof NavbarGraphsImport
+      parentRoute: typeof NavbarImport
+    }
     '/_navbar/jupyter': {
       id: '/_navbar/jupyter'
       path: '/jupyter'
@@ -132,6 +145,7 @@ export const routeTree = rootRoute.addChildren({
   NavbarRoute: NavbarRoute.addChildren({
     NavbarApiimportRoute,
     NavbarCustomfieldsRoute,
+    NavbarGraphsRoute,
     NavbarJupyterRoute,
     NavbarPivottableRoute,
     NavbarSettingsRoute,
@@ -160,6 +174,7 @@ export const routeTree = rootRoute.addChildren({
       "children": [
         "/_navbar/api_import",
         "/_navbar/custom_fields",
+        "/_navbar/graphs",
         "/_navbar/jupyter",
         "/_navbar/pivottable",
         "/_navbar/settings"
@@ -174,6 +189,10 @@ export const routeTree = rootRoute.addChildren({
     },
     "/_navbar/custom_fields": {
       "filePath": "_navbar/custom_fields.tsx",
+      "parent": "/_navbar"
+    },
+    "/_navbar/graphs": {
+      "filePath": "_navbar/graphs.tsx",
       "parent": "/_navbar"
     },
     "/_navbar/jupyter": {

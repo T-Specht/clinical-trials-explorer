@@ -52,6 +52,8 @@ type SettingsStore = {
   setFilter: (filter: RuleGroupType) => void;
   openAIKey: string | null;
   setOpenAIKey: (value: string | null) => void;
+  openAIModelName: string;
+  setOpenAIModelName: (value: string) => void;
 };
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -74,6 +76,11 @@ export const useSettingsStore = create<SettingsStore>()(
       setOpenAIKey: (value) =>
         set((state) => {
           state.openAIKey = value;
+        }),
+      openAIModelName: "gpt-4o-mini",
+      setOpenAIModelName: (value) =>
+        set((state) => {
+          state.openAIModelName = value;
         }),
     })),
     {

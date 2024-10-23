@@ -1,15 +1,11 @@
 import { EntryTable, CustomFieldTable } from "@/db/schema";
+import { z } from "zod";
 
 export type UIFieldType = {
   key: keyof typeof EntryTable.$inferInsert;
   label: string;
   description?: string;
   isDisabled?: boolean;
-};
-
-export type CustomUIFieldType = Omit<UIFieldType, "key"> & {
-  id: string;
-  dataType: "string" | "number" | "boolean";
 };
 
 export const CUSTOM_FIELDS_SEED: (typeof CustomFieldTable.$inferInsert)[] = [
@@ -29,7 +25,7 @@ export const CUSTOM_FIELDS_SEED: (typeof CustomFieldTable.$inferInsert)[] = [
     dataType: "boolean",
     label: "Repurpose",
     aiDescription:
-      "true if the h1 receptor antagonist is used, tested or evaluated for other indications than their normal one of allergy, all forms of allergic rhinitis or urticaria in this study. If in doubt, answer with true.\n\nDefinition of drug repurposing: Drug repositioning (also called drug repurposing) involves the investigation of existing drugs for new therapeutic purposes other than their normal use cases.",
+      "Is the H1 receptor antagonist being used, tested, or evaluated in this study for any indications outside of its typical use in treating allergies, allergic rhinitis, or urticaria?\n\nIf unsure, respond with “true.”\n\nNote: Drug repurposing (or repositioning) refers to using existing drugs for new therapeutic purposes beyond their conventional indications.",
     description: "Whether the study could be repurposing",
     isDisabled: false,
   },
@@ -61,11 +57,37 @@ export const FIELDS: UIFieldType[] = [
     label: "Enrollment Count",
   },
   {
-    key: "isRepurpose",
-    label: "Is Repurpose",
-  },
-  {
     key: "sex",
     label: "Sex of people",
   },
 ];
+
+export const buildAiReturnSchemaForCustomFields = (
+  customFields: (typeof CustomFieldTable.$inferSelect)[]
+) => {
+  let schema = z.object(
+    Object.fromEntries(
+      customFields.map((f) => {
+        const key = f.idName;
+        const types = {
+          string: z.string(),
+          number: z.number(),
+          boolean: z.boolean(),
+        };
+        const type = types[f.dataType];
+
+        return [
+          key,
+          z.object({
+            value: type.describe(f.aiDescription || f.description || ""),
+            explanation: z
+              .string()
+              .describe("shortly describe why you picked this value"),
+          }),
+        ];
+      })
+    )
+  );
+
+  return schema;
+};
