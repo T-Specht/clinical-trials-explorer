@@ -25,7 +25,7 @@ import { useDebounceCallback, useDebounceValue } from "usehooks-ts";
 import { useDebounce } from "@uidotdev/usehooks";
 import { diff } from "deep-object-diff";
 
-import { QueryBuilderShadcnUi } from "@/components/ui/react-querybuilder-shadcn-ui";
+import { QueryBuilderMantine } from "@react-querybuilder/mantine";
 
 const columns = getTableColumns(EntryTable);
 
@@ -124,13 +124,13 @@ const EntryFilter = (props: { showCount?: boolean }) => {
 
   return (
     <>
-      <QueryBuilderShadcnUi>
+      <QueryBuilderMantine>
         <QueryBuilder
           fields={fields}
           query={query}
           onQueryChange={setQuery}
         ></QueryBuilder>
-      </QueryBuilderShadcnUi>
+      </QueryBuilderMantine>
       {!isLoading && props.showCount && (
         <div>
           Number of database entries matching: <code>{data}</code>

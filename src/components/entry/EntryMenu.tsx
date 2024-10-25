@@ -1,36 +1,38 @@
 import { JUMP_POINT_OPTIONS } from "@/lib/constants";
 import CustomNavMenu from "../CustomNavMenu";
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectItem,
-  SelectContent,
-} from "@/components/ui/select";
+// import { Input } from "@/components/ui/input";
+// import {
+//   Select,
+//   SelectTrigger,
+//   SelectValue,
+//   SelectItem,
+//   SelectContent,
+// } from "@/components/ui/select";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogDescription,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogTrigger,
+// } from "@/components/ui/dialog";
 import EntryFilter from "../EntryFilter";
 import { useSettingsStore } from "@/lib/zustand";
 import { Filter } from "lucide-react";
+import { Button, NumberInput, Drawer, Select } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+// import {
+//   Sheet,
+//   SheetContent,
+//   SheetDescription,
+//   SheetHeader,
+//   SheetTitle,
+//   SheetTrigger,
+// } from "@/components/ui/sheet";
 
 const EntryMenu = (props: {
   onNext: () => any;
@@ -42,6 +44,7 @@ const EntryMenu = (props: {
   onCurrentChange: (value: number) => void;
 }) => {
   const filter = useSettingsStore((s) => s.filter);
+  const [opened, { open, close }] = useDisclosure(false);
 
   const filterIsActive = filter.rules.length > 0;
 
@@ -56,70 +59,56 @@ const EntryMenu = (props: {
           Prev
         </Button>
 
-        <div className="flex space-x-2">
-          <Input
-            type="number"
-            className="w-[75px] h-7"
+        <div className="flex space-x-2 items-center">
+          <NumberInput
+            className="w-[75px]"
+            size="xs"
             value={props.currentIndex}
             onChange={(e) => {
-              props.onCurrentChange(parseInt(e.target.value));
+              props.onCurrentChange(parseInt(e.toString()));
             }}
-          ></Input>
+          ></NumberInput>
           <span> / {props.maxLength}</span>
         </div>
 
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button
-              size="xs"
-              variant="secondary"
-            >
-              <div className="flex space-x-2 items-center">
-                <div>Options</div>
-                {filterIsActive && <Filter size={15}></Filter>}
-              </div>
-            </Button>
-          </SheetTrigger>
-          <SheetContent className="!max-w-[800px] w-full space-y-5 drop-shadow-2xl">
-            <div>
-              <SheetHeader className="mb-3">
-                <SheetTitle>Filter</SheetTitle>
-                <SheetDescription>
-                  Applies filter application wide
-                </SheetDescription>
-              </SheetHeader>
-              <div className="overflow-x-scroll">
-                <EntryFilter showCount></EntryFilter>
-              </div>
+        <Button size="xs" variant="secondary" onClick={open}>
+          <div className="flex space-x-2 items-center">
+            <div>Options</div>
+            {filterIsActive && <Filter size={15}></Filter>}
+          </div>
+        </Button>
+
+        <Drawer
+          opened={opened}
+          onClose={close}
+          title="Settings"
+          position="right"
+          offset={8}
+          radius="md"
+          size="xl"
+        >
+          <div>
+            <h2>Filter</h2>
+            <div> Applies filter application wide</div>
+            <div className="overflow-x-scroll">
+              <EntryFilter showCount></EntryFilter>
             </div>
+          </div>
+          <div>
+            <h2>Jump Point</h2>
             <div>
-              <SheetHeader className="mb-3">
-                <SheetTitle>Jump Point</SheetTitle>
-                <SheetDescription>
-                  Sets the default loading point for the clinicaltrials.gov
-                  website in split view container
-                </SheetDescription>
-              </SheetHeader>
-              <div>
-                <Select
-                  onValueChange={(e) => props.setJumpPoint(e)}
-                  value={props.jumpPoint}
-                >
-                  <SelectTrigger className="w-[180px] h-7">
-                    <SelectValue placeholder="Jump poiunt" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {JUMP_POINT_OPTIONS.map((option) => (
-                      <SelectItem value={option} key={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              Sets the default loading point for the clinicaltrials.gov website
+              in split view container
             </div>
-          </SheetContent>
-        </Sheet>
+            <Select
+              label="Jump Point"
+              data={JUMP_POINT_OPTIONS}
+              searchable
+              value={props.jumpPoint}
+              onChange={(e) => props.setJumpPoint(e || "")}
+            ></Select>
+          </div>
+        </Drawer>
 
         {/* <Dialog>
           <DialogTrigger>Options</DialogTrigger>

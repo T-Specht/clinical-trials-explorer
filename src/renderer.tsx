@@ -27,6 +27,12 @@
  */
 
 import "./index.css";
+import "@mantine/core/styles.css";
+
+import { MantineProvider } from "@mantine/core";
+import "@mantine/notifications/styles.css";
+import { Notifications } from "@mantine/notifications";
+import { ModalsProvider } from "@mantine/modals";
 
 import { createRoot } from "react-dom/client";
 
@@ -68,7 +74,7 @@ const persister = createSyncStoragePersister({
 //   persister: localStoragePersister,
 // })
 
-import { Toaster } from "@/components/ui/sonner";
+// import { Toaster } from "@/components/ui/sonner";
 import { useDarkMode } from "usehooks-ts";
 
 const hashHistory = createHashHistory();
@@ -83,17 +89,16 @@ declare module "@tanstack/react-router" {
 }
 const root = createRoot(document.getElementById("root")!);
 
-
 const MainComponent = () => {
-  const { isDarkMode } = useDarkMode();
+  // const { isDarkMode } = useDarkMode();
 
-  useEffect(() => {
-    const root = window.document.documentElement;
+  // useEffect(() => {
+  //   const root = window.document.documentElement;
 
-    root.classList.remove("light", "dark");
+  //   root.classList.remove("light", "dark");
 
-    root.classList.add(isDarkMode ? "dark" : "light");
-  }, [isDarkMode]);
+  //   root.classList.add(isDarkMode ? "dark" : "light");
+  // }, [isDarkMode]);
 
   return (
     <StrictMode>
@@ -101,10 +106,14 @@ const MainComponent = () => {
         client={queryClient}
         persistOptions={{ persister }}
       >
-        <RouterProvider router={router} />
+        <MantineProvider>
+          <Notifications />
+          <ModalsProvider>
+            <RouterProvider router={router} />
+          </ModalsProvider>
+        </MantineProvider>
       </PersistQueryClientProvider>
       {/* <ThemePanel /> */}
-      <Toaster />
     </StrictMode>
   );
 };

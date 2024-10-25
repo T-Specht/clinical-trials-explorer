@@ -1,8 +1,9 @@
 import { CustomFieldTable, EntryTable } from "@/db/schema";
 import { UIFieldType } from "@/lib/fields";
-import { Input } from "../ui/input";
-import { Checkbox } from "../ui/checkbox";
+// import { Input } from "../ui/input";
+// import { Checkbox } from "../ui/checkbox";
 import { BotIcon, Brain, LoaderCircle, RefreshCcwIcon } from "lucide-react";
+import { Checkbox, NumberInput, TextInput } from "@mantine/core";
 
 const EntryField = (props: {
   databaseField?: UIFieldType;
@@ -45,25 +46,23 @@ const EntryField = (props: {
             return (
               <div>
                 <label className="font-bold">{f.label}</label>
-                <Input
-                  type="number"
+                <NumberInput
                   value={value || 0}
-                  onChange={(e) => onChange(Number(e.target.value))}
+                  onChange={(e) => onChange(Number(e))}
                   disabled={f.isDisabled}
-                ></Input>
+                ></NumberInput>
               </div>
             );
 
           case "string":
             return (
               <div>
-                <label className="font-bold">{f.label}</label>
-                <Input
-                  type="text"
+                <TextInput
+                  label={f.label}
                   value={value || ""}
                   onChange={(e) => onChange(e.target.value)}
                   disabled={f.isDisabled}
-                ></Input>
+                />
               </div>
             );
 
@@ -73,11 +72,9 @@ const EntryField = (props: {
                 <Checkbox
                   checked={value || false}
                   id={keyOrId.toString()}
-                  onCheckedChange={(e) => onChange(Boolean(e.valueOf()))}
+                  onChange={(e) => onChange(Boolean(e.valueOf()))}
+                  label={f.label}
                 ></Checkbox>
-                <label className="" htmlFor={keyOrId.toString()}>
-                  {f.label}
-                </label>
               </div>
             );
           default:

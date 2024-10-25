@@ -1,16 +1,5 @@
 import Container from "@/components/Container";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
+
 import { CustomFieldTable, EntryTable } from "@/db/schema";
 import {
   ctgApiClient,
@@ -26,13 +15,15 @@ import { createInsertSchema } from "drizzle-zod";
 import { useState } from "react";
 
 import { useForm, SubmitHandler, useWatch } from "react-hook-form";
-import { toast } from "sonner";
+
 import { useDebounceValue } from "usehooks-ts";
 import { z } from "zod";
 
 import { defineStepper } from "@stepperize/react";
 import { cn } from "@/lib/utils";
 import { CUSTOM_FIELDS_SEED } from "@/lib/fields";
+import { notifications } from "@mantine/notifications";
+import { Button, Progress, TextInput } from "@mantine/core";
 
 const schema = z.object({
   query: z.string(),
@@ -52,14 +43,7 @@ export const Route = createFileRoute("/_navbar/api_import")({
     const [progress, setProgress] = useState(0);
     const stepper = useStepper();
 
-    const form = useForm<FormInputs>({
-      resolver: zodResolver(schema),
-      defaultValues: {
-        query: "",
-      },
-    });
-
-    const _query = form.watch("query");
+    const [_query, setQuery] = useState("");
     const [query] = useDebounceValue(_query, 500);
 
     const { data: number } = useQuery({
@@ -70,34 +54,49 @@ export const Route = createFileRoute("/_navbar/api_import")({
       },
     });
 
-    const onSubmit: SubmitHandler<FormInputs> = async ({ query }) => {
+    const onSubmit = async () => {
       const studies = await getStudies(query);
 
       if (studies.length == 0) {
-        return toast.error("No studies found");
+        return notifications.show({
+          message: "No studies found!",
+          color: "red",
+        });
       }
 
       if (
         !confirm(`Downloaded ${studies.length} studies. Import into database?`)
       ) {
-        return toast.warning("Import cancelled");
+        return notifications.show({
+          message: "Import cancelled",
+          color: "yellow",
+        });
       }
 
-      toast.success(`Found ${studies.length} studies, importing now...`);
+      notifications.show({
+        message: `Found ${studies.length} studies, importing now...`,
+        color: "green",
+      });
 
       const length = studies.length;
 
       await insertStudiesIntoDatabase(
         studies,
         (e) => {
-          toast.error(e);
+          notifications.show({
+            message: e,
+            color: "red",
+          });
         },
         (p) => {
           setProgress(p * 100);
         }
       );
 
-      toast.success(`Import done.`);
+      notifications.show({
+        message: `Import done.`,
+        color: "green",
+      });
     };
 
     return (
@@ -111,7 +110,7 @@ export const Route = createFileRoute("/_navbar/api_import")({
                   .delete(EntryTable)
                   .run()
                   .then(() => {
-                    toast.success("Database cleared");
+                    notifications.show({ message: "Database cleared" });
                   });
             }}
           >
@@ -121,49 +120,36 @@ export const Route = createFileRoute("/_navbar/api_import")({
           <Button
             onClick={() => {
               confirm("Confirm?") &&
-                database.insert(CustomFieldTable).values(CUSTOM_FIELDS_SEED).run()
-                .then(() => {
-                  toast.success("Seed done.");
-                });;
+                database
+                  .insert(CustomFieldTable)
+                  .values(CUSTOM_FIELDS_SEED)
+                  .run()
+                  .then(() => {
+                    notifications.show({ message: "Seed done." });
+                  });
             }}
           >
             Seed Custom Fields
           </Button>
         </div>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <FormField
-              key=""
-              control={form.control}
-              name="query"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel></FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    {query == "" ? (
-                      <span>Search Query on Clinical trials.gov</span>
-                    ) : (
-                      <span>
-                        Found {number} studies for "<code>{query}</code>"
-                      </span>
-                    )}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              Import
-            </Button>
-          </form>
-        </Form>
+        <TextInput
+          label="Search query"
+          value={_query}
+          onChange={(e) => setQuery(e.target.value)}
+          description={
+            query == "" ? (
+              <span>Search Query on Clinical trials.gov</span>
+            ) : (
+              <span>
+                Found {number} studies for "<code>{query}</code>"
+              </span>
+            )
+          }
+        ></TextInput>
+        <Button onClick={onSubmit}>Import</Button>
         <div className="mt-5 space-y-3">
           <div>Progress</div>
-          <Progress value={progress} max={100}></Progress>
+          <Progress value={progress}></Progress>
         </div>
         <div className="grid divide-x grid-cols-4 bg-muted rounded-md mt-3 overflow-hidden">
           {stepper.all.map((step, i) => {

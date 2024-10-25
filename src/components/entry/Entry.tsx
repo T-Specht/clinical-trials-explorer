@@ -1,10 +1,6 @@
 import { useShallow } from "zustand/react/shallow";
 
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
+import { PanelResizeHandle, Panel, PanelGroup } from "react-resizable-panels";
 import { useEffect, useRef, useState } from "react";
 import Markdown from "marked-react";
 import Container from "../Container";
@@ -17,10 +13,10 @@ import { JsonView } from "react-json-view-lite";
 import "react-json-view-lite/dist/index.css";
 import { diff, updatedDiff } from "deep-object-diff";
 import { useDebounce } from "@uidotdev/usehooks";
-import { toast } from "sonner";
+
 import { produce } from "immer";
 
-const Handle = () => <ResizableHandle withHandle className="border-2" />;
+const Handle = () => <PanelResizeHandle className="p-[1px] bg-black" />;
 
 // const fieldsSchema = createInsertSchema(entry).pick({
 //   design_masking: true,
@@ -37,6 +33,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { desc } from "drizzle-orm";
 import { generateMetaData } from "@/lib/langchain";
+import { notifications } from "@mantine/notifications";
 
 const Entry = (props: {
   entry: typeof EntryTable.$inferSelect;
@@ -70,8 +67,6 @@ const Entry = (props: {
     queryKey: ["ai_meta", current.id, current.createdAt],
     enabled: !!openAIKey,
     queryFn: () => {
-      
-
       const schema = buildAiReturnSchemaForCustomFields(props.customFields);
 
       let input = {
@@ -116,17 +111,10 @@ const Entry = (props: {
         }
       );
 
-      toast.info(
-        <div>
-          <div>Saved changes</div>
-          <div>
-            <code className="text-[12px]">[{keys.join(", ")}]</code>
-          </div>
-        </div>,
-        {
-          duration: 2000,
-        }
-      );
+      notifications.show({
+        title: "Saved changes",
+        message: keys.join(", "),
+      });
     }
   };
 
@@ -171,8 +159,8 @@ const Entry = (props: {
 
   return (
     <div className={props.className}>
-      <ResizablePanelGroup direction="horizontal" autoSaveId="layout1">
-        <ResizablePanel
+      <PanelGroup direction="horizontal" autoSaveId="layout1">
+        <Panel
           className="min-w-[25%]"
           defaultSize={panelSizes.left}
           //onResize={(s) => setPanelSizes({ ...panelSizes, left: s })}
@@ -232,19 +220,19 @@ const Entry = (props: {
           onSubmit={(data, form) => {}}
         ></EditEntryForm> */}
           </Container>
-        </ResizablePanel>
+        </Panel>
         <Handle></Handle>
-        <ResizablePanel>
-          <ResizablePanelGroup direction="vertical" autoSaveId="layout2">
-            <ResizablePanel className="">
+        <Panel>
+          <PanelGroup direction="vertical" autoSaveId="layout2">
+            <Panel className="">
               <iframe
                 // src={`http://localhost:${PROXY_PORT}/study/${current.nctId}${jumpPoint}`}
                 src={`https://clinicaltrials.gov/study/${current.nctId}${jumpPoint}`}
-                className="w-full h-full dark:invert-[95%] dark:hue-rotate-180"
+                className="w-full h-full dark:invert-[95%] dark:hue-rotate-180 border-none"
               ></iframe>
-            </ResizablePanel>
+            </Panel>
             <Handle></Handle>
-            <ResizablePanel
+            <Panel
               className="flex flex-col h-0"
               defaultSize={panelSizes.rightBottom}
               //onResize={(s) => setPanelSizes({ ...panelSizes, rightBottom: s })}
@@ -268,10 +256,10 @@ const Entry = (props: {
                 ></Editor>
               </div>
               {/* <div className="p-4 flex">Settings?</div> */}
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+            </Panel>
+          </PanelGroup>
+        </Panel>
+      </PanelGroup>
     </div>
   );
 };

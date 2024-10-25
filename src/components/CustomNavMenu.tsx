@@ -1,46 +1,8 @@
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuIndicator,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  NavigationMenuViewport,
-} from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 import { Link, LinkOptions } from "@tanstack/react-router";
 import { useState } from "react";
 
-// <>
-// <TabNav.Root>
-//   <TabNav.Link asChild active={location.pathname == "/"}>
-//     <Link to="/">Home</Link>
-//   </TabNav.Link>
-//   <TabNav.Link
-//     href="/settings"
-//     asChild
-//     active={location.pathname == "/settings"}
-//   >
-//     <Link to="/settings">Settings</Link>
-//   </TabNav.Link>
-//   <TabNav.Link
-//     href="/api_import"
-//     asChild
-//     active={location.pathname == "/api_import"}
-//   >
-//     <Link to="/api_import">API Import</Link>
-//   </TabNav.Link>
-//   <TabNav.Link
-//     href="/jupyter"
-//     asChild
-//     active={location.pathname == "/jupyter"}
-//   >
-//     <Link to="/jupyter">Jupyter</Link>
-//   </TabNav.Link>
-// </TabNav.Root>
 
-// <hr />
 
 export const CustomLink = (props: {
   to: LinkOptions["to"];
@@ -48,7 +10,7 @@ export const CustomLink = (props: {
   children: React.ReactNode;
 }) => {
   return (
-    <Link to={props.to} params={props.params} className="[&.active]:font-bold">
+    <Link to={props.to} params={props.params} className="[&.active]:font-bold no-underline text-primary">
       {props.children}
     </Link>
   );
