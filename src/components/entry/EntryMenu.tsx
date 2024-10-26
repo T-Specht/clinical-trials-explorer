@@ -50,7 +50,7 @@ const EntryMenu = (props: {
 
   return (
     <CustomNavMenu>
-      <div className="flex justify-between items-center space-x-2 p-2 overflow-x-scroll">
+      <div className="flex justify-between items-center space-x-2 p-2 overflow-x-scroll no-scrollbar">
         <Button
           size="xs"
           onClick={props.onPrev}

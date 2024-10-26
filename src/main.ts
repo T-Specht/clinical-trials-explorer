@@ -65,10 +65,7 @@ const createWindow = async () => {
 
   app.dock.setIcon(ICON_PATH);
 
-  // IPC test
-  ipcMain.on("ping", () => console.log("pong"));
-  ipcMain.handle("db:execute", execute);
-  await runMigrate();
+ 
 
   //proxy.listen(PROXY_PORT);
 };
@@ -76,7 +73,13 @@ const createWindow = async () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on("ready", createWindow);
+app.on("ready", async () => {
+   // IPC test
+   ipcMain.on("ping", () => console.log("pong"));
+   ipcMain.handle("db:execute", execute);
+   await runMigrate();
+  createWindow();
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

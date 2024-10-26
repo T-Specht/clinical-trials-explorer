@@ -1,6 +1,7 @@
 import { useShallow } from "zustand/react/shallow";
 
-import { PanelResizeHandle, Panel, PanelGroup } from "react-resizable-panels";
+//import { PanelResizeHandle, Panel, PanelGroup } from "react-resizable-panels";
+import {ResizableHandle, ResizablePanel, ResizablePanelGroup} from '../ui/resizable'
 import { useEffect, useRef, useState } from "react";
 import Markdown from "marked-react";
 import Container from "../Container";
@@ -16,7 +17,7 @@ import { useDebounce } from "@uidotdev/usehooks";
 
 import { produce } from "immer";
 
-const Handle = () => <PanelResizeHandle className="p-[1px] bg-black" />;
+const Handle = () => <ResizableHandle withHandle className="border-2 " />;
 
 // const fieldsSchema = createInsertSchema(entry).pick({
 //   design_masking: true,
@@ -159,8 +160,8 @@ const Entry = (props: {
 
   return (
     <div className={props.className}>
-      <PanelGroup direction="horizontal" autoSaveId="layout1">
-        <Panel
+      <ResizablePanelGroup direction="horizontal" autoSaveId="layout1">
+        <ResizablePanel
           className="min-w-[25%]"
           defaultSize={panelSizes.left}
           //onResize={(s) => setPanelSizes({ ...panelSizes, left: s })}
@@ -220,19 +221,19 @@ const Entry = (props: {
           onSubmit={(data, form) => {}}
         ></EditEntryForm> */}
           </Container>
-        </Panel>
+        </ResizablePanel>
         <Handle></Handle>
-        <Panel>
-          <PanelGroup direction="vertical" autoSaveId="layout2">
-            <Panel className="">
+        <ResizablePanel>
+          <ResizablePanelGroup direction="vertical" autoSaveId="layout2">
+            <ResizablePanel className="">
               <iframe
                 // src={`http://localhost:${PROXY_PORT}/study/${current.nctId}${jumpPoint}`}
                 src={`https://clinicaltrials.gov/study/${current.nctId}${jumpPoint}`}
                 className="w-full h-full dark:invert-[95%] dark:hue-rotate-180 border-none"
               ></iframe>
-            </Panel>
+            </ResizablePanel>
             <Handle></Handle>
-            <Panel
+            <ResizablePanel
               className="flex flex-col h-0"
               defaultSize={panelSizes.rightBottom}
               //onResize={(s) => setPanelSizes({ ...panelSizes, rightBottom: s })}
@@ -256,10 +257,10 @@ const Entry = (props: {
                 ></Editor>
               </div>
               {/* <div className="p-4 flex">Settings?</div> */}
-            </Panel>
-          </PanelGroup>
-        </Panel>
-      </PanelGroup>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 };
