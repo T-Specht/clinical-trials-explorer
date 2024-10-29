@@ -5,7 +5,7 @@ import { PROXY_PORT } from "./lib/constants";
 import { execute, runMigrate } from "./db/db-main";
 import { startJupyter } from "./main_process/start_jupyter";
 
-
+const isMac = process.platform === "darwin";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
@@ -63,7 +63,7 @@ const createWindow = async () => {
     }
   );
 
-  app.dock.setIcon(ICON_PATH);
+  if(isMac) app.dock.setIcon(ICON_PATH);
 
  
 
