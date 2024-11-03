@@ -6,16 +6,21 @@ import { useEffect, useRef, useState } from "react";
 import Markdown from "marked-react";
 import Container from "../Container";
 import { Editor } from "../Editor";
-import { CustomFieldTable, EntryTable } from "../../db/schema";
-import { updateEntryFields } from "@/lib/database-wrappers";
+import { CustomFieldEntryTable, CustomFieldTable, EntryTable } from "../../db/schema";
+import { insertCustomFieldData, updateCustomFieldData, updateEntryFields } from "@/lib/database-wrappers";
 import EntryMenu from "./EntryMenu";
+//import { serialize, deserialize } from "superjson";
+
 
 import { JsonView } from "react-json-view-lite";
 import "react-json-view-lite/dist/index.css";
-import { diff, updatedDiff } from "deep-object-diff";
+import { diff, updatedDiff, detailedDiff } from "deep-object-diff";
 import { useDebounce } from "@uidotdev/usehooks";
 
 import { produce } from "immer";
+
+const serialize = (data: any) => data.toString();
+const deserialize = (data: string) => data;
 
 const Handle = () => <ResizableHandle withHandle className="border-2 " />;
 
@@ -39,6 +44,7 @@ import { notifications } from "@mantine/notifications";
 const Entry = (props: {
   entry: typeof EntryTable.$inferSelect;
   customFields: (typeof CustomFieldTable.$inferSelect)[];
+  customFieldsData: typeof CustomFieldEntryTable.$inferSelect[];
   children?: React.ReactNode;
   className?: string;
 }) => {
@@ -61,7 +67,10 @@ const Entry = (props: {
   const [selectedFieldQuery, setSelectedFieldsQuery] = useState("");
 
   const [current, updateCurrent] = useState(props.entry);
-  const [lastSave, setLastSave] = useState(current);
+  const [customFieldDataCurrent, updateCustomFieldDataCurrent] = useState(props.customFieldsData);
+
+
+  const [lastSave, setLastSave] = useState({current, customFieldDataCurrent});
   const queryClient = useQueryClient();
 
   const aiQuery = useQuery({
@@ -84,14 +93,14 @@ const Entry = (props: {
   });
 
   const saveChangesIfAny = async () => {
-    const updateDiff = diff(lastSave, debouncedCurrent);
+    const updateDiff = diff(lastSave.current, debouncedCurrent);
     const keys = Object.keys(updateDiff);
 
     //console.log(updateDiff);
 
     if (keys.length > 0) {
       console.log("Save updated diff", updateDiff);
-      setLastSave(current);
+      setLastSave({...lastSave, current});
       updateEntryFields(props.entry.id, updateDiff);
       // queryClient.invalidateQueries({
       //   queryKey: ["filtered_entries"],
@@ -119,8 +128,59 @@ const Entry = (props: {
     }
   };
 
-  // Only save after 1 seconds of no changes
-  const debouncedCurrent = useDebounce(current, 1000);
+  const saveChangesIfAnyForCustomFields = async () => {
+    //console.log("Save updated custom fields", customFieldDataCurrent);
+    const updateDiff = diff(lastSave.customFieldDataCurrent, customFieldDataCurrent);
+    const keys = Object.keys(updateDiff);
+    
+    if(keys.length > 0){
+      console.log("Save updated CF diff", updateDiff);
+   
+     // updateEntryFields(props.entry.id, updateDiff);
+
+     for(let k of keys){
+      let field = customFieldDataCurrent.at(parseInt(k))!;
+      let updatedFields = (updateDiff as any)[k];
+      //console.log(field, updatedFields);
+      
+      if(field.id == -1){
+        // Field is new and needs to be inserted
+        let [insertedEntry] = await insertCustomFieldData(field);
+        updateCustomFieldDataCurrent(produce(d => {
+          d[parseInt(k)] = insertedEntry;
+          return d;
+        }));
+
+      }else{
+        // Update
+        updateCustomFieldData(field.id, updatedFields);
+      }
+
+      notifications.show({
+        title: "Saved changes",
+        message: props.customFields.find((f) => f.id == field.customFieldId)?.label || "Unknown field",
+      });
+      
+     }
+
+    }
+
+    queryClient.invalidateQueries({
+      queryKey: ["filtered_entries", filter],
+    })
+
+    setLastSave({...lastSave, customFieldDataCurrent});
+    
+  };
+
+    // Only save after 1 seconds of no changes
+    const debouncedCurrent = useDebounce(current, 1000);
+    const debouncedCustomFieldDataCurrent = useDebounce(customFieldDataCurrent, 1000);
+
+  useEffect(() => {
+    saveChangesIfAnyForCustomFields();
+  }, [debouncedCustomFieldDataCurrent]);
+
 
   useEffect(() => {
     saveChangesIfAny();
@@ -134,24 +194,36 @@ const Entry = (props: {
     };
   };
 
-  const registerCustomField = (fieldId: string) => {
+  const registerCustomField = (fieldId: number) => {
+
+    let value = customFieldDataCurrent.find((f) => f.customFieldId == fieldId)?.value;
+
     return {
-      value: current.custom_fields ? current.custom_fields[fieldId] : null,
+      value: !!value ? deserialize(value) : null,
       onChange: (newVal: any) => {
-        updateCurrent(
-          produce((draft) => {
-            if (!draft.custom_fields) {
-              draft.custom_fields = {};
-            }
-            draft.custom_fields[fieldId] = newVal;
-            return draft;
-          })
-        );
-      },
-    };
+
+        //console.log("Setting custom field", fieldId, newVal);
+        updateCustomFieldDataCurrent(produce(d => {
+          let index = d.findIndex((f) => f.customFieldId == fieldId);
+          if(index == -1){
+            // Mock database entry because it is inserted later
+            d.push({
+              customFieldId: fieldId,
+              entryId: current.id,
+              value: serialize(newVal),
+              id: -1,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            });
+          }else{
+            d[index].value = serialize(newVal);
+          }
+          return d;
+        }))
+      }
+    }
   };
 
-  const iframe2 = useRef<HTMLIFrameElement>(null);
 
   // useEffect(() => {
   //   debouncedSave()
@@ -200,8 +272,8 @@ const Entry = (props: {
                       aiQuery.refetch();
                     }}
                     key={f.id}
-                    customField={f}
-                    {...registerCustomField(f.idName)}
+                    customFieldDefinition={f}
+                    {...registerCustomField(f.id)}
                   ></EntryField>
                 );
               })}

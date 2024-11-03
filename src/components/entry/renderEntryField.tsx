@@ -7,7 +7,7 @@ import { Checkbox, NumberInput, TextInput } from "@mantine/core";
 
 const EntryField = (props: {
   databaseField?: UIFieldType;
-  customField?: typeof CustomFieldTable.$inferSelect;
+  customFieldDefinition?: typeof CustomFieldTable.$inferSelect;
   regenerateAi?: () => void;
   aiData?:
     | {
@@ -19,7 +19,7 @@ const EntryField = (props: {
   onChange: (val: any) => void;
   value: any;
 }) => {
-  const { databaseField, onChange, value, customField } = props;
+  const { databaseField, onChange, value, customFieldDefinition: customField } = props;
   const isDatabaseField = !!databaseField;
 
   if (!!databaseField && !!customField) {
@@ -67,12 +67,14 @@ const EntryField = (props: {
             );
 
           case "boolean":
+
             return (
               <div className="my-3 flex items-center space-x-2">
                 <Checkbox
-                  checked={value || false}
+                // TODO: Fix this
+                  checked={value === 'true'}
                   id={keyOrId.toString()}
-                  onChange={(e) => onChange(Boolean(e.valueOf()))}
+                  onChange={(e) => onChange(e.target.checked)}
                   label={f.label}
                 ></Checkbox>
               </div>

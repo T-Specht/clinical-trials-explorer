@@ -30,7 +30,8 @@ const Component = () => {
     queries: [
       {
         queryKey: ["filtered_entries", filter],
-        queryFn: () => getAllFilteredEntries(filter),
+        //queryFn: () => getAllFilteredEntries(filter),
+        queryFn: () => getAllEntries(),
       },
       {
         queryKey: ["custom_fields"],
@@ -39,10 +40,14 @@ const Component = () => {
     ],
   });
 
+
+  
+
   const [currentIndex, setCurrentIndex] = useLocalStorage("current_index", 0);
 
   useEffect(() => {
     if (entries.data && currentIndex >= entries.data.length) {
+      console.log(entries.data[0]);
       setCurrentIndex(0);
       console.log("resetting current index because it was out of bounds");
     }
@@ -86,6 +91,7 @@ const Component = () => {
         <Entry
           className="flex-1 h-0"
           entry={current}
+          customFieldsData={current.customFieldsData}
           customFields={customFields.data}
           key={current.id}
         ></Entry>

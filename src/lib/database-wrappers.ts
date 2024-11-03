@@ -1,5 +1,10 @@
-import { CustomFieldTable, EntryTable } from "@/db/schema";
 import {
+  CustomFieldTable,
+  EntryTable,
+  CustomFieldEntryTable,
+} from "@/db/schema";
+import {
+  and,
   count,
   DefaultLogger,
   eq,
@@ -9,9 +14,9 @@ import {
 } from "drizzle-orm";
 import { APIStudyReturn } from "./api";
 import { createInsertSchema } from "drizzle-zod";
+import * as schema from "@/db/schema";
 
 import { drizzle } from "drizzle-orm/sqlite-proxy";
-import * as schema from "../db/schema";
 import {
   defaultValueProcessorByRule,
   formatQuery,
@@ -56,7 +61,13 @@ export const getListOfEntryIds = async () => {
 };
 
 export const getAllEntries = async () => {
-  return database.select().from(EntryTable);
+  let res = await database.query.EntryTable.findMany({
+    with: {
+      customFieldsData: true,
+    },
+  });
+
+  return res;
 };
 
 const customFormatQueryFilter = (filter: RuleGroupType) => {
@@ -139,6 +150,25 @@ export const updateEntryFields = async (
   fields: Partial<typeof EntryTable.$inferInsert>
 ) => {
   return database.update(EntryTable).set(fields).where(eq(EntryTable.id, id));
+};
+
+export const insertCustomFieldData = async (
+  fields: typeof CustomFieldEntryTable.$inferInsert
+) => {
+  return database
+    .insert(CustomFieldEntryTable)
+    .values({ ...fields, id: undefined })
+    .returning();
+};
+
+export const updateCustomFieldData = async (
+  id: number,
+  fields: Partial<typeof CustomFieldEntryTable.$inferInsert>
+) => {
+  return database
+    .update(CustomFieldEntryTable)
+    .set(fields)
+    .where(eq(CustomFieldEntryTable.id, id));
 };
 
 export const getEntry = async (id: number) => {

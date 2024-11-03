@@ -1,4 +1,7 @@
-// import { relations } from "drizzle-orm/relations";
+import { relations } from "drizzle-orm/relations";
+import { CustomFieldEntryTable, CustomFieldTable, EntryTable } from "./schema";
+
+
 // import { entry, conditionMeshTermOnEntries, meshTerm, interventionMeshTermOnEntries, locationOnEntries, location, aiCache } from "./schema";
 
 // export const conditionMeshTermOnEntriesRelations = relations(conditionMeshTermOnEntries, ({one}) => ({

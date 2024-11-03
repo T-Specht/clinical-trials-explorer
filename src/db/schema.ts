@@ -1,6 +1,6 @@
 //import { pgTable, integer, text, timestamp, boolean, doublePrecision, varchar, uniqueIndex, serial, foreignKey, pgEnum } from "drizzle-orm/pg-core"
 import { APIStudyReturn } from "@/lib/api";
-import { desc, sql } from "drizzle-orm";
+import { desc, relations, sql } from "drizzle-orm";
 
 import { text, integer, sqliteTable, numeric } from "drizzle-orm/sqlite-core";
 
@@ -55,6 +55,20 @@ export const CustomFieldTable = sqliteTable("CustomField", {
     .default(false),
 });
 
+export const CustomFieldEntryTable = sqliteTable("CustomFieldEntry", {
+  id: integer("id").primaryKey().notNull(),
+  createdAt: integer("createdAt", { mode: "timestamp" })
+    .default(new Date())
+    .notNull(),
+  updatedAt: integer("updatedAt", { mode: "timestamp" })
+    .default(new Date())
+    .$onUpdate(() => new Date())
+    .notNull(),
+  customFieldId: integer("custom_field_id").references(() => CustomFieldTable.id).notNull(),
+  entryId: integer("entry_id").references(() => EntryTable.id).notNull(),
+  value: text("value"),
+});
+
 export const PersistentZustandTable = sqliteTable("PersistentZustand", {
   id: integer("id").primaryKey().notNull(),
   createdAt: integer("createdAt", { mode: "timestamp" })
@@ -67,6 +81,22 @@ export const PersistentZustandTable = sqliteTable("PersistentZustand", {
   name: text("name").notNull().unique(),
   data: text("data"),
 });
+
+export const entriesRelation = relations(EntryTable, ({many}) => ({
+  customFieldsData: many(CustomFieldEntryTable),
+}));
+
+export const customFieldsDataRelation = relations(CustomFieldEntryTable, ({one}) => ({
+  entry: one(EntryTable, {
+      fields: [CustomFieldEntryTable.entryId],
+      references: [EntryTable.id]
+  }),
+  customFieldDefinition: one(CustomFieldTable, {
+      fields: [CustomFieldEntryTable.customFieldId],
+      references: [CustomFieldTable.id]
+  })
+}));
+
 
 // export const entry = sqliteTable("Entry", {
 //   test_field: text("test_field").default("hallo"),
