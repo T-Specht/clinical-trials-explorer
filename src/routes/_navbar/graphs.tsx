@@ -15,7 +15,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Config } from "plotly.js";
 import Plot, { PlotParams } from "react-plotly.js";
 
-
 export const Route = createFileRoute("/_navbar/graphs")({
   component: () => <PlotPage></PlotPage>,
 });
@@ -135,6 +134,7 @@ const PlotPage = () => {
           <CPlot
             data={[
               {
+                //@ts-ignore - this is a bug in the types
                 type: "densitymap",
                 lat: data.heatmap.lats,
                 lon: data.heatmap.lngs,
@@ -146,28 +146,31 @@ const PlotPage = () => {
             ]}
             layout={{
               //map: { center: { lon: 60, lat: 30 }, style: "outdoors", zoom: 2 },
+              //@ts-ignore - this is a bug in the types
               coloraxis: { colorscale: "Viridis" },
               title: "Locations Density Map",
               map: {
                 center: { lon: 10, lat: 40 },
-                zoom: 0
-              }
+                zoom: 0,
+              },
             }}
           ></CPlot>
 
           <CPlot
             data={[
               {
+                //@ts-ignore - this is a bug in the types
                 type: "scattermap",
                 lat: data.heatmap.lats,
                 lon: data.heatmap.lngs,
               },
             ]}
             layout={{
+              //@ts-ignore - this is a bug in the types
               coloraxis: { colorscale: "Viridis" },
               map: {
                 center: { lon: 10, lat: 40 },
-                zoom: 0
+                zoom: 0,
               },
               title: "Locations Scatter Plot",
             }}

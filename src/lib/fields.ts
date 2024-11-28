@@ -10,32 +10,29 @@ export type UIFieldType = {
 
 export const CUSTOM_FIELDS_SEED: (typeof CustomFieldTable.$inferInsert)[] = [
   {
-    id: 1,
     idName: "usecase",
     dataType: "string",
     label: "Usecase of drug",
     aiDescription:
-      "the indication/use case/condition treated with the cetirizine in the study. Maximum of 3 words! Whenever possible the usecase should correspond to the study title condition.",
+      "the indication/use case/condition treated with the {drug_name} in the study. Maximum of 3 words! Whenever possible the usecase should correspond to the study title condition.",
     description: "Usecase",
     isDisabled: false,
   },
   {
-    id: 2,
     idName: "is_repurpose",
     dataType: "boolean",
     label: "Repurpose",
     aiDescription:
-      "Is the H1 receptor antagonist being used, tested, or evaluated in this study for any indications outside of its typical use in treating allergies, allergic rhinitis, or urticaria?\n\nIf unsure, respond with “true.”\n\nNote: Drug repurposing (or repositioning) refers to using existing drugs for new therapeutic purposes beyond their conventional indications.",
+      "Is the {drug_name} being used, tested, or evaluated in this study for any indications outside of its typical use in treating {list of conventional usecases}?\n\nIf unsure, respond with “true.”\n\nNote: Drug repurposing (or repositioning) refers to using existing drugs for new therapeutic purposes beyond their conventional indications.",
     description: "Whether the study could be repurposing",
     isDisabled: false,
   },
   {
-    id: 3,
-    idName: "h1ra",
+    idName: "drug_name",
     dataType: "string",
-    label: "H1Ra",
+    label: "drug name",
     aiDescription:
-      "the name of the H1 receptor antagonists / antihistamine if there was one that was looked at primarily. Possible options are cetirizine, levocetirizine, loratadine, desloratadine, fexofenadine or a combination of these. If non of these can be chosen, output 'No h1ra'. If multiple apply, list them by using |, e.g. cetirizine|loratadiine",
+      "the name of the drug if there was one that was looked at primarily. Possible options are {list of drugs} or a combination of these. If non of these can be chosen, output 'No drug'. If multiple apply, list them by using |, e.g. drug1|drug2",
     description: "",
     isDisabled: false,
   },
@@ -67,25 +64,27 @@ export const buildAiReturnSchemaForCustomFields = (
 ) => {
   let schema = z.object(
     Object.fromEntries(
-      customFields.map((f) => {
-        const key = f.idName;
-        const types = {
-          string: z.string(),
-          number: z.number(),
-          boolean: z.boolean(),
-        };
-        const type = types[f.dataType];
+      customFields
+        .filter((f) => !!f.aiDescription && f.aiDescription.trim() != "")
+        .map((f) => {
+          const key = f.idName;
+          const types = {
+            string: z.string(),
+            number: z.number(),
+            boolean: z.boolean(),
+          };
+          const type = types[f.dataType];
 
-        return [
-          key,
-          z.object({
-            value: type.describe(f.aiDescription || f.description || ""),
-            explanation: z
-              .string()
-              .describe("shortly describe why you picked this value"),
-          }),
-        ];
-      })
+          return [
+            key,
+            z.object({
+              value: type.describe(f.aiDescription || f.description || ""),
+              explanation: z
+                .string()
+                .describe("shortly describe why you picked this value"),
+            }),
+          ];
+        })
     )
   );
 

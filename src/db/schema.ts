@@ -29,9 +29,6 @@ export const EntryTable = sqliteTable("Entry", {
   design_intervention_model: text("design_intervention_model"),
   design_masking: text("design_masking"),
   design_observation_model: text("design_observation_model"),
-  isRepurpose: integer("is_repurpose", { mode: "boolean" })
-    .default(false)
-    .notNull(),
 });
 
 export const CustomFieldTable = sqliteTable("CustomField", {

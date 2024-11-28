@@ -8,6 +8,8 @@ import { eq } from "drizzle-orm";
 //import superjson from "superjson";
 import { getZustandItem } from "./database-wrappers";
 import { RuleGroupType } from "react-querybuilder";
+import { PivotConfigSave } from "@/routes/_navbar/pivottable";
+import { PivotDeriveRule, SAMPLE_RULES } from "./pivot-derive";
 
 // Store Data in Database
 const storage: StateStorage = {
@@ -54,6 +56,14 @@ type SettingsStore = {
   setOpenAIKey: (value: string | null) => void;
   openAIModelName: string;
   setOpenAIModelName: (value: string) => void;
+  onboardingComplete: boolean;
+  setOnboardingComplete: (value: boolean) => void;
+  savedPivotConfigs: { name: string; config: PivotConfigSave }[];
+  setSavedPivotConfigs: (
+    value: { name: string; config: PivotConfigSave }[]
+  ) => void;
+  pivotDeriveRules: PivotDeriveRule[];
+  setPivotDeriveRules: (value: PivotDeriveRule[]) => void;
 };
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -81,6 +91,21 @@ export const useSettingsStore = create<SettingsStore>()(
       setOpenAIModelName: (value) =>
         set((state) => {
           state.openAIModelName = value;
+        }),
+      onboardingComplete: false,
+      setOnboardingComplete: (value) =>
+        set((state) => {
+          state.onboardingComplete = value;
+        }),
+      savedPivotConfigs: [],
+      setSavedPivotConfigs: (value) =>
+        set((state) => {
+          state.savedPivotConfigs = value;
+        }),
+      pivotDeriveRules: SAMPLE_RULES,
+      setPivotDeriveRules: (value) =>
+        set((state) => {
+          state.pivotDeriveRules = value;
         }),
     })),
     {

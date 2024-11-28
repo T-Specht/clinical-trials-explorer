@@ -27,7 +27,6 @@
  */
 
 import "./index.css";
-import "@mantine/core/styles.css";
 
 import { MantineProvider } from "@mantine/core";
 import "@mantine/notifications/styles.css";
@@ -106,7 +105,7 @@ const MainComponent = () => {
         client={queryClient}
         persistOptions={{ persister }}
       >
-        <MantineProvider>
+        <MantineProvider defaultColorScheme="auto">
           <Notifications />
           <ModalsProvider>
             <RouterProvider router={router} />

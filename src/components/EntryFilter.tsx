@@ -2,6 +2,7 @@ import { EntryTable } from "@/db/schema";
 import {
   database,
   getAllFilteredEntries,
+  getCustomFields,
   getNumberOfEntriesWithFilter,
 } from "@/lib/database-wrappers";
 import { getKeys } from "@/lib/utils";
@@ -109,7 +110,42 @@ const EntryFilter = (props: { showCount?: boolean }) => {
   const { data: fields, isLoading: fieldsLoading } = useQuery({
     queryKey: ["fields"],
     queryFn: async () => {
-      return FILTER_FILEDS;
+      //return FILTER_FILEDS;
+
+      return [
+        ...(await getCustomFields()).map((c) => {
+          const inputTypes = {
+            boolean: "text",
+            number: "number",
+            string: "text",
+          };
+
+          return {
+            label: c.label,
+            name: c.idName,
+            inputType:
+              inputTypes[c.dataType as keyof typeof inputTypes] || "text",
+            defaultOperator: "contains",
+          } satisfies Field;
+        }),
+        ...Object.entries(getTableColumns(EntryTable)).map((e) => {
+          const [key, c] = e;
+
+          const inputTypes = {
+            SQLiteBoolean: "checkbox",
+            SQLiteTimestamp: "datetime-local",
+            SQLiteInteger: "number",
+          };
+
+          return {
+            label: c.name,
+            name: c.name,
+            defaultOperator: "contains",
+            inputType:
+              inputTypes[c.columnType as keyof typeof inputTypes] || "text",
+          } satisfies Field;
+        }),
+      ];
     },
   });
 

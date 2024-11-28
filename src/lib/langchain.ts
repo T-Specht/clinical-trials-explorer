@@ -5,6 +5,7 @@ import { z } from "zod";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { useSettingsStore } from "./zustand";
+import { searxng_api_search } from "./searxng_api";
 // import { ChatAnthropicTools } from "@langchain/anthropic/experimental";
 
 // import { searxng_api_search } from "./searxng_api";
@@ -23,7 +24,7 @@ const getModel = (temp = 0) => {
   //return new ChatAnthropic({});
 };
 
-async function generateQueries(input: string) {
+export async function generateAISearchQueries(input: string) {
   const model = getModel(0.5);
 
   const queryGenerationSchema = z.object({
@@ -37,27 +38,10 @@ async function generateQueries(input: string) {
     ],
     ["user", "{input}"],
   ]);
-  // Binding "function_call" below makes the model always call the specified function.
-  // If you want to allow the model to call functions selectively, omit it.
-  const functionCallingModel = model.bind({
-    functions: [
-      {
-        name: "output_formatter",
-        description: "Should always be used to properly format output",
-        parameters: zodToJsonSchema(queryGenerationSchema),
-      },
-    ],
-    function_call: { name: "output_formatter" },
-  });
-
-  const outputParser = new JsonOutputFunctionsParser<
-    z.infer<typeof queryGenerationSchema>
-  >();
 
   const chain = RunnableSequence.from([
     prompt,
-    functionCallingModel,
-    outputParser,
+    model.withStructuredOutput(queryGenerationSchema),
   ]).withRetry({
     stopAfterAttempt: 3,
   });
@@ -109,28 +93,13 @@ async function extractPapers(input: string, references: string) {
     {references}`,
     ],
   ]);
-  // Binding "function_call" below makes the model always call the specified function.
-  // If you want to allow the model to call functions selectively, omit it.
-  const functionCallingModel = model.bind({
-    functions: [
-      {
-        name: "output_formatter",
-        description: "Should always be used to properly format output",
-        parameters: zodToJsonSchema(schema),
-      },
-    ],
-    function_call: { name: "output_formatter" },
-  });
-
-  const outputParser = new JsonOutputFunctionsParser<z.infer<typeof schema>>();
 
   const chain = RunnableSequence.from([
     prompt,
-    functionCallingModel,
-    outputParser,
-  ]).withRetry({
-    stopAfterAttempt: 3,
-  });
+    model.withStructuredOutput(schema).withRetry({
+      stopAfterAttempt: 3,
+    }),
+  ]);
 
   const result = await chain.invoke({
     input: input,
@@ -143,7 +112,6 @@ export async function generateMetaData<T extends z.ZodRawShape>(
   input: string,
   returnSchema: z.ZodObject<T>
 ) {
-
   const model = getModel(0).withStructuredOutput(returnSchema).withRetry({
     stopAfterAttempt: 3,
   });
@@ -186,24 +154,87 @@ export async function generateMetaData<T extends z.ZodRawShape>(
 }
 
 export async function findPublications(input: string) {
-  // Get search results
-  //   const queries = await generateQueries(input);
-  //   const references = (
-  //     await Promise.all(
-  //       queries.map(async (query) => await searxng_api_search(query))
-  //     )
-  //   )
-  //     .flat()
-  //     .map((r) => {
-  //       const { content, url, title, authors, score, engine } = r;
-  //       return { content, url, title, authors, score, engine };
-  //     })
-  //     .filter((e, i, self) => {
-  //       const index = self.findIndex((t) => t.title === e.title);
-  //       return index === i;
-  //     });
-  //   const matched = await extractPapers(input, JSON.stringify(references));
-  //   return matched;
+  //Get search results
+  const queries = await generateAISearchQueries(input);
+  const references = (
+    await Promise.all(
+      queries.map(async (query) => await searxng_api_search(query))
+    )
+  )
+    .flat()
+    .map((r) => {
+      const { content, url, title, authors, score, engine } = r;
+      return { content, url, title, authors, score, engine };
+    })
+    .filter((e, i, self) => {
+      const index = self.findIndex((t) => t.title === e.title);
+      return index === i;
+    });
+  const matched = await extractPapers(input, JSON.stringify(references));
+  return matched;
+}
+
+export async function findPublicationsWithCallbacks(
+  input: string,
+  callbacks: {
+    queries: (queries: string[]) => any;
+    rawReferences: (
+      references: {
+        content: string;
+        url: string;
+        title: string;
+        authors: string[] | undefined;
+        score: number;
+        engine: string;
+      }[]
+    ) => any;
+    aiMatches: (
+      result: {
+        url: string;
+        title: string;
+        authors: string;
+        year: string;
+        source: string;
+        confidence: number;
+      }[]
+    ) => any;
+  },
+  addEngines: string[] = []
+) {
+  //Get search results
+  const queries = await generateAISearchQueries(input);
+  callbacks.queries(queries);
+
+  const references = (
+    await Promise.all(
+      queries.map(
+        async (query) =>
+          await searxng_api_search(query, 3, {
+            engines:
+              "pubmed,semantic scholar,openairepublications,google_scholar" +
+              addEngines.join(","),
+            categories: "science", // TODO
+          })
+      )
+    )
+  )
+    .flat()
+    .map((r) => {
+      const { content, url, title, authors, score, engine } = r;
+      return { content, url, title, authors, score, engine };
+    })
+    .filter((e, i, self) => {
+      const index = self.findIndex((t) => t.title === e.title);
+      return index === i;
+    });
+
+  callbacks.rawReferences(references);
+
+  const matched = await extractPapers(input, JSON.stringify(references));
+
+  callbacks.aiMatches(matched.result);
+
+  return matched;
 }
 
 export async function generateAIInformation(input: string) {

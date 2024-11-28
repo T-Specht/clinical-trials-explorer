@@ -52,7 +52,7 @@ const EntryMenu = (props: {
     <CustomNavMenu>
       <div className="flex justify-between items-center space-x-2 p-2 overflow-x-scroll no-scrollbar">
         <Button
-          size="xs"
+          size="compact-sm"
           onClick={props.onPrev}
           disabled={props.currentIndex == 1}
         >
@@ -71,7 +71,7 @@ const EntryMenu = (props: {
           <span> / {props.maxLength}</span>
         </div>
 
-        <Button size="xs" variant="secondary" onClick={open}>
+        <Button size="compact-sm" variant="secondary" onClick={open}>
           <div className="flex space-x-2 items-center">
             <div>Options</div>
             {filterIsActive && <Filter size={15}></Filter>}
@@ -123,7 +123,7 @@ const EntryMenu = (props: {
         </Dialog> */}
 
         <Button
-          size="xs"
+          size="compact-sm"
           onClick={props.onNext}
           disabled={props.currentIndex == props.maxLength}
         >

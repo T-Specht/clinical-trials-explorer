@@ -1,20 +1,31 @@
 import { useShallow } from "zustand/react/shallow";
 
 //import { PanelResizeHandle, Panel, PanelGroup } from "react-resizable-panels";
-import {ResizableHandle, ResizablePanel, ResizablePanelGroup} from '../ui/resizable'
-import { useEffect, useRef, useState } from "react";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "../ui/resizable";
+import { useEffect, useState } from "react";
 import Markdown from "marked-react";
 import Container from "../Container";
 import { Editor } from "../Editor";
-import { CustomFieldEntryTable, CustomFieldTable, EntryTable } from "../../db/schema";
-import { insertCustomFieldData, updateCustomFieldData, updateEntryFields } from "@/lib/database-wrappers";
-import EntryMenu from "./EntryMenu";
+import {
+  CustomFieldEntryTable,
+  CustomFieldTable,
+  EntryTable,
+} from "../../db/schema";
+import {
+  getAllEntries,
+  insertCustomFieldData,
+  updateCustomFieldData,
+  updateEntryFields,
+} from "@/lib/database-wrappers";
 //import { serialize, deserialize } from "superjson";
-
 
 import { JsonView } from "react-json-view-lite";
 import "react-json-view-lite/dist/index.css";
-import { diff, updatedDiff, detailedDiff } from "deep-object-diff";
+import { diff } from "deep-object-diff";
 import { useDebounce } from "@uidotdev/usehooks";
 
 import { produce } from "immer";
@@ -34,17 +45,26 @@ const Handle = () => <ResizableHandle withHandle className="border-2 " />;
 import { buildAiReturnSchemaForCustomFields, FIELDS } from "@/lib/fields";
 import EntryField from "./renderEntryField";
 import { useSettingsStore } from "@/lib/zustand";
-import EntryFilter from "../EntryFilter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { z } from "zod";
-import { desc } from "drizzle-orm";
 import { generateMetaData } from "@/lib/langchain";
 import { notifications } from "@mantine/notifications";
+import {
+  Badge,
+  Pill,
+  ScrollArea,
+  Title,
+  useComputedColorScheme,
+} from "@mantine/core";
+import { cn } from "@/lib/utils";
+import { searxng_api_search } from "@/lib/searxng_api";
+import { PublicationSearch } from "./PublicationSearch";
+
+(window as any)["searxng_api_search"] = searxng_api_search;
 
 const Entry = (props: {
   entry: typeof EntryTable.$inferSelect;
   customFields: (typeof CustomFieldTable.$inferSelect)[];
-  customFieldsData: typeof CustomFieldEntryTable.$inferSelect[];
+  customFieldsData: (typeof CustomFieldEntryTable.$inferSelect)[];
   children?: React.ReactNode;
   className?: string;
 }) => {
@@ -53,13 +73,6 @@ const Entry = (props: {
   );
   const filter = useSettingsStore((s) => s.filter);
 
-  const [panelSizes, setPanelSizes] = useState({
-    left: 50,
-    rightBottom: 20,
-  });
-
-  const [currentIndex, setCurrentIndex] = useState(0);
-
   const [selectedFields, setSelectedFields] = useState<typeof FIELDS>(
     // "selected_fields",
     FIELDS
@@ -67,10 +80,11 @@ const Entry = (props: {
   const [selectedFieldQuery, setSelectedFieldsQuery] = useState("");
 
   const [current, updateCurrent] = useState(props.entry);
-  const [customFieldDataCurrent, updateCustomFieldDataCurrent] = useState(props.customFieldsData);
+  const [customFieldDataCurrent, updateCustomFieldDataCurrent] = useState(
+    props.customFieldsData
+  );
 
-
-  const [lastSave, setLastSave] = useState({current, customFieldDataCurrent});
+  const [lastSave, setLastSave] = useState({ current, customFieldDataCurrent });
   const queryClient = useQueryClient();
 
   const aiQuery = useQuery({
@@ -100,7 +114,7 @@ const Entry = (props: {
 
     if (keys.length > 0) {
       console.log("Save updated diff", updateDiff);
-      setLastSave({...lastSave, current});
+      setLastSave({ ...lastSave, current });
       updateEntryFields(props.entry.id, updateDiff);
       // queryClient.invalidateQueries({
       //   queryKey: ["filtered_entries"],
@@ -130,57 +144,80 @@ const Entry = (props: {
 
   const saveChangesIfAnyForCustomFields = async () => {
     //console.log("Save updated custom fields", customFieldDataCurrent);
-    const updateDiff = diff(lastSave.customFieldDataCurrent, customFieldDataCurrent);
+    const updateDiff = diff(
+      lastSave.customFieldDataCurrent,
+      customFieldDataCurrent
+    );
     const keys = Object.keys(updateDiff);
-    
-    if(keys.length > 0){
+
+    if (keys.length > 0) {
       console.log("Save updated CF diff", updateDiff);
-   
-     // updateEntryFields(props.entry.id, updateDiff);
 
-     for(let k of keys){
-      let field = customFieldDataCurrent.at(parseInt(k))!;
-      let updatedFields = (updateDiff as any)[k];
-      //console.log(field, updatedFields);
-      
-      if(field.id == -1){
-        // Field is new and needs to be inserted
-        let [insertedEntry] = await insertCustomFieldData(field);
-        updateCustomFieldDataCurrent(produce(d => {
-          d[parseInt(k)] = insertedEntry;
-          return d;
-        }));
+      // updateEntryFields(props.entry.id, updateDiff);
 
-      }else{
-        // Update
-        updateCustomFieldData(field.id, updatedFields);
+      for (let k of keys) {
+        let field = customFieldDataCurrent.at(parseInt(k))!;
+        let updatedFields = (updateDiff as any)[k];
+        //console.log(field, updatedFields);
+
+        if (field.id == -1) {
+          // Field is new and needs to be inserted
+          let [insertedEntry] = await insertCustomFieldData(field);
+          updateCustomFieldDataCurrent(
+            produce((d) => {
+              d[parseInt(k)] = insertedEntry;
+              return d;
+            })
+          );
+        } else {
+          // Update
+          updateCustomFieldData(field.id, updatedFields);
+        }
+
+        notifications.show({
+          title: "Saved changes",
+          message:
+            props.customFields.find((f) => f.id == field.customFieldId)
+              ?.label || "Unknown field",
+        });
       }
-
-      notifications.show({
-        title: "Saved changes",
-        message: props.customFields.find((f) => f.id == field.customFieldId)?.label || "Unknown field",
-      });
-      
-     }
-
     }
 
-    queryClient.invalidateQueries({
-      queryKey: ["filtered_entries", filter],
-    })
+    // queryClient.invalidateQueries({
+    //   queryKey: ["filtered_entries", filter],
+    // });
 
-    setLastSave({...lastSave, customFieldDataCurrent});
-    
+    // Hot swap the current entry in the cache
+    queryClient.setQueryData(
+      ["filtered_entries", filter],
+      (prev: Awaited<ReturnType<typeof getAllEntries>>) => {
+        if (!prev) return prev;
+
+        return prev.map((e) => {
+          if (e.id == current.id) {
+            let clone = structuredClone(e);
+            // TODO FIX THIS - this is because customFieldDefinition is not in type of props
+            clone.customFieldsData = customFieldDataCurrent;
+            return clone;
+          }
+          return e;
+        });
+      }
+    );
+
+    setLastSave({ ...lastSave, customFieldDataCurrent });
   };
 
-    // Only save after 1 seconds of no changes
-    const debouncedCurrent = useDebounce(current, 1000);
-    const debouncedCustomFieldDataCurrent = useDebounce(customFieldDataCurrent, 1000);
+  // Only save after 1 seconds of no changes
+  const debouncedCurrent = useDebounce(current, 1000);
+  const debouncedCustomFieldDataCurrent = useDebounce(
+    customFieldDataCurrent,
+    1000
+  );
 
   useEffect(() => {
     saveChangesIfAnyForCustomFields();
   }, [debouncedCustomFieldDataCurrent]);
-
 
   useEffect(() => {
     saveChangesIfAny();
@@ -195,35 +232,36 @@ const Entry = (props: {
   };
 
   const registerCustomField = (fieldId: number) => {
-
-    let value = customFieldDataCurrent.find((f) => f.customFieldId == fieldId)?.value;
+    let value = customFieldDataCurrent.find(
+      (f) => f.customFieldId == fieldId
+    )?.value;
 
     return {
       value: !!value ? deserialize(value) : null,
       onChange: (newVal: any) => {
-
         //console.log("Setting custom field", fieldId, newVal);
-        updateCustomFieldDataCurrent(produce(d => {
-          let index = d.findIndex((f) => f.customFieldId == fieldId);
-          if(index == -1){
-            // Mock database entry because it is inserted later
-            d.push({
-              customFieldId: fieldId,
-              entryId: current.id,
-              value: serialize(newVal),
-              id: -1,
-              createdAt: new Date(),
-              updatedAt: new Date()
-            });
-          }else{
-            d[index].value = serialize(newVal);
-          }
-          return d;
-        }))
-      }
-    }
+        updateCustomFieldDataCurrent(
+          produce((d) => {
+            let index = d.findIndex((f) => f.customFieldId == fieldId);
+            if (index == -1) {
+              // Mock database entry because it is inserted later
+              d.push({
+                customFieldId: fieldId,
+                entryId: current.id,
+                value: serialize(newVal),
+                id: -1,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              });
+            } else {
+              d[index].value = serialize(newVal);
+            }
+            return d;
+          })
+        );
+      },
+    };
   };
-
 
   // useEffect(() => {
   //   debouncedSave()
@@ -235,18 +273,20 @@ const Entry = (props: {
       <ResizablePanelGroup direction="horizontal" autoSaveId="layout1">
         <ResizablePanel
           className="min-w-[25%]"
-          defaultSize={panelSizes.left}
+          defaultSize={50}
           //onResize={(s) => setPanelSizes({ ...panelSizes, left: s })}
         >
-          <Container className="prose h-full overflow-y-scroll">
-            <h2>{current.title}</h2>
-            <p>{current.nctId}</p>
+          <Container className="h-full overflow-y-scroll">
+            <Title order={4}>{current.title}</Title>
+            <div>
+              <Badge>{current.nctId}</Badge>
+            </div>
 
             <h3>Description</h3>
-            <div className="max-h-60 overflow-y-scroll rounded-md border p-2">
+            <ScrollArea className="max-h-60 overflow-y-scroll rounded-md border p-2">
               <Markdown>{current.description || ""}</Markdown>
-            </div>
-            <div className="space-y-3">
+            </ScrollArea>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 my-5">
               {selectedFields.map((f) => {
                 return (
                   <EntryField
@@ -261,7 +301,9 @@ const Entry = (props: {
                 return (
                   <EntryField
                     aiStatus={
-                      !openAIKey
+                      !openAIKey ||
+                      !f.aiDescription ||
+                      f.aiDescription?.trim() == ""
                         ? "disabled"
                         : aiQuery.isLoading || aiQuery.isRefetching
                           ? "loading"
@@ -277,6 +319,10 @@ const Entry = (props: {
                   ></EntryField>
                 );
               })}
+            </div>
+
+            <div>
+              <PublicationSearch entry={props.entry}></PublicationSearch>
             </div>
 
             <div className="font-mono text-[12px] dark:invert">
@@ -301,13 +347,13 @@ const Entry = (props: {
               <iframe
                 // src={`http://localhost:${PROXY_PORT}/study/${current.nctId}${jumpPoint}`}
                 src={`https://clinicaltrials.gov/study/${current.nctId}${jumpPoint}`}
-                className="w-full h-full dark:invert-[95%] dark:hue-rotate-180 border-none"
+                className="w-full h-full border-none dark:invert-[95%] dark:hue-rotate-180"
               ></iframe>
             </ResizablePanel>
             <Handle></Handle>
             <ResizablePanel
               className="flex flex-col h-0"
-              defaultSize={panelSizes.rightBottom}
+              defaultSize={20}
               //onResize={(s) => setPanelSizes({ ...panelSizes, rightBottom: s })}
             >
               {/* <iframe

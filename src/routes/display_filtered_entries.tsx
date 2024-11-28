@@ -30,8 +30,8 @@ const Component = () => {
     queries: [
       {
         queryKey: ["filtered_entries", filter],
-        //queryFn: () => getAllFilteredEntries(filter),
-        queryFn: () => getAllEntries(),
+        queryFn: () => getAllFilteredEntries(filter),
+        //queryFn: () => getAllEntries(),
       },
       {
         queryKey: ["custom_fields"],
@@ -39,9 +39,6 @@ const Component = () => {
       },
     ],
   });
-
-
-  
 
   const [currentIndex, setCurrentIndex] = useLocalStorage("current_index", 0);
 

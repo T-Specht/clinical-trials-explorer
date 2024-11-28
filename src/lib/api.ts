@@ -55,6 +55,77 @@ export const getStudies = async (query: string) => {
   return flattenedData;
 };
 
+export const getStudiesByNCTIds = async (ids: string[]) => {
+  const getPage = async (pageToken?: string) => {
+    const { data } = await ctgApiClient.GET("/studies", {
+      params: {
+        query: {
+          "query.id": ids.join(","),
+          countTotal: true,
+          pageSize: 500,
+          pageToken,
+        },
+      },
+    });
+    return data;
+  };
+
+  let firstPage = await getPage();
+  let studies = firstPage?.studies || [];
+
+  let nextPageToken = firstPage?.nextPageToken;
+
+  // Download studies while there is a next page
+  while (nextPageToken) {
+    console.log(nextPageToken);
+
+    let nextPage = await getPage(nextPageToken);
+    studies = [...studies, ...(nextPage?.studies || [])];
+    nextPageToken = nextPage?.nextPageToken;
+  }
+
+  // flat
+
+  const flattenedData = studies.map((study) => {
+    return {
+      ...study.annotationSection?.annotationModule,
+      ...study.derivedSection,
+      ...study.documentSection?.largeDocumentModule,
+      hasResults: study.hasResults,
+      ...study.protocolSection,
+      ...study.resultsSection,
+    };
+  });
+
+  return flattenedData;
+};
+
+export const getSingleStudyByNCTId = async (nctId: string) => {
+  const { data } = await ctgApiClient.GET("/studies", {
+    params: {
+      query: {
+        "query.id": nctId,
+        pageSize: 1,
+      },
+    },
+  });
+
+  const study = data?.studies[0];
+
+  if (!study) return null;
+
+  const flattenedData = {
+    ...study.annotationSection?.annotationModule,
+    ...study.derivedSection,
+    ...study.documentSection?.largeDocumentModule,
+    hasResults: study.hasResults,
+    ...study.protocolSection,
+    ...study.resultsSection,
+  };
+
+  return flattenedData;
+};
+
 export type APIStudyReturn = Awaited<ReturnType<typeof getStudies>>[0];
 
 export const getNumberOfStudiesForQuery = async (query: string) => {

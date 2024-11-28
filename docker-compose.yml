@@ -1,0 +1,17 @@
+services:
+  searxng:
+    ports:
+      - 8080:8080
+    container_name: searxng
+    image: docker.io/searxng/searxng:latest
+    restart: unless-stopped
+    networks:
+      - web
+    volumes:
+      - ./searxng-data:/etc/searxng:rw
+    # environment:
+    #   - SEARXNG_BASE_URL=https://search.specht.io
+    #   - SEARXNG_URL=https://search.specht.io
+networks:
+  web:
+    external: true

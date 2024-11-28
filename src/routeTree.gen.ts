@@ -14,12 +14,15 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as DisplayfilteredentriesImport } from './routes/display_filtered_entries'
 import { Route as NavbarImport } from './routes/_navbar'
 import { Route as IndexImport } from './routes/index'
+import { Route as OnboardingWelcomeImport } from './routes/_onboarding/welcome'
+import { Route as OnboardingLegacyimportImport } from './routes/_onboarding/legacy_import'
+import { Route as OnboardingApiimportImport } from './routes/_onboarding/api_import'
 import { Route as NavbarSettingsImport } from './routes/_navbar/settings'
 import { Route as NavbarPivottableImport } from './routes/_navbar/pivottable'
+import { Route as NavbarPivotDerivedPageImport } from './routes/_navbar/pivot-derived-page'
 import { Route as NavbarJupyterImport } from './routes/_navbar/jupyter'
 import { Route as NavbarGraphsImport } from './routes/_navbar/graphs'
 import { Route as NavbarCustomfieldsImport } from './routes/_navbar/custom_fields'
-import { Route as NavbarApiimportImport } from './routes/_navbar/api_import'
 
 // Create/Update Routes
 
@@ -38,6 +41,21 @@ const IndexRoute = IndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const OnboardingWelcomeRoute = OnboardingWelcomeImport.update({
+  path: '/welcome',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const OnboardingLegacyimportRoute = OnboardingLegacyimportImport.update({
+  path: '/legacy_import',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const OnboardingApiimportRoute = OnboardingApiimportImport.update({
+  path: '/api_import',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const NavbarSettingsRoute = NavbarSettingsImport.update({
   path: '/settings',
   getParentRoute: () => NavbarRoute,
@@ -45,6 +63,11 @@ const NavbarSettingsRoute = NavbarSettingsImport.update({
 
 const NavbarPivottableRoute = NavbarPivottableImport.update({
   path: '/pivottable',
+  getParentRoute: () => NavbarRoute,
+} as any)
+
+const NavbarPivotDerivedPageRoute = NavbarPivotDerivedPageImport.update({
+  path: '/pivot-derived-page',
   getParentRoute: () => NavbarRoute,
 } as any)
 
@@ -60,11 +83,6 @@ const NavbarGraphsRoute = NavbarGraphsImport.update({
 
 const NavbarCustomfieldsRoute = NavbarCustomfieldsImport.update({
   path: '/custom_fields',
-  getParentRoute: () => NavbarRoute,
-} as any)
-
-const NavbarApiimportRoute = NavbarApiimportImport.update({
-  path: '/api_import',
   getParentRoute: () => NavbarRoute,
 } as any)
 
@@ -93,13 +111,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DisplayfilteredentriesImport
       parentRoute: typeof rootRoute
     }
-    '/_navbar/api_import': {
-      id: '/_navbar/api_import'
-      path: '/api_import'
-      fullPath: '/api_import'
-      preLoaderRoute: typeof NavbarApiimportImport
-      parentRoute: typeof NavbarImport
-    }
     '/_navbar/custom_fields': {
       id: '/_navbar/custom_fields'
       path: '/custom_fields'
@@ -121,6 +132,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NavbarJupyterImport
       parentRoute: typeof NavbarImport
     }
+    '/_navbar/pivot-derived-page': {
+      id: '/_navbar/pivot-derived-page'
+      path: '/pivot-derived-page'
+      fullPath: '/pivot-derived-page'
+      preLoaderRoute: typeof NavbarPivotDerivedPageImport
+      parentRoute: typeof NavbarImport
+    }
     '/_navbar/pivottable': {
       id: '/_navbar/pivottable'
       path: '/pivottable'
@@ -135,6 +153,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NavbarSettingsImport
       parentRoute: typeof NavbarImport
     }
+    '/_onboarding/api_import': {
+      id: '/_onboarding/api_import'
+      path: '/api_import'
+      fullPath: '/api_import'
+      preLoaderRoute: typeof OnboardingApiimportImport
+      parentRoute: typeof rootRoute
+    }
+    '/_onboarding/legacy_import': {
+      id: '/_onboarding/legacy_import'
+      path: '/legacy_import'
+      fullPath: '/legacy_import'
+      preLoaderRoute: typeof OnboardingLegacyimportImport
+      parentRoute: typeof rootRoute
+    }
+    '/_onboarding/welcome': {
+      id: '/_onboarding/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof OnboardingWelcomeImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -143,14 +182,17 @@ declare module '@tanstack/react-router' {
 export const routeTree = rootRoute.addChildren({
   IndexRoute,
   NavbarRoute: NavbarRoute.addChildren({
-    NavbarApiimportRoute,
     NavbarCustomfieldsRoute,
     NavbarGraphsRoute,
     NavbarJupyterRoute,
+    NavbarPivotDerivedPageRoute,
     NavbarPivottableRoute,
     NavbarSettingsRoute,
   }),
   DisplayfilteredentriesRoute,
+  OnboardingApiimportRoute,
+  OnboardingLegacyimportRoute,
+  OnboardingWelcomeRoute,
 })
 
 /* prettier-ignore-end */
@@ -163,7 +205,10 @@ export const routeTree = rootRoute.addChildren({
       "children": [
         "/",
         "/_navbar",
-        "/display_filtered_entries"
+        "/display_filtered_entries",
+        "/_onboarding/api_import",
+        "/_onboarding/legacy_import",
+        "/_onboarding/welcome"
       ]
     },
     "/": {
@@ -172,20 +217,16 @@ export const routeTree = rootRoute.addChildren({
     "/_navbar": {
       "filePath": "_navbar.tsx",
       "children": [
-        "/_navbar/api_import",
         "/_navbar/custom_fields",
         "/_navbar/graphs",
         "/_navbar/jupyter",
+        "/_navbar/pivot-derived-page",
         "/_navbar/pivottable",
         "/_navbar/settings"
       ]
     },
     "/display_filtered_entries": {
       "filePath": "display_filtered_entries.tsx"
-    },
-    "/_navbar/api_import": {
-      "filePath": "_navbar/api_import.tsx",
-      "parent": "/_navbar"
     },
     "/_navbar/custom_fields": {
       "filePath": "_navbar/custom_fields.tsx",
@@ -199,6 +240,10 @@ export const routeTree = rootRoute.addChildren({
       "filePath": "_navbar/jupyter.tsx",
       "parent": "/_navbar"
     },
+    "/_navbar/pivot-derived-page": {
+      "filePath": "_navbar/pivot-derived-page.tsx",
+      "parent": "/_navbar"
+    },
     "/_navbar/pivottable": {
       "filePath": "_navbar/pivottable.tsx",
       "parent": "/_navbar"
@@ -206,6 +251,15 @@ export const routeTree = rootRoute.addChildren({
     "/_navbar/settings": {
       "filePath": "_navbar/settings.tsx",
       "parent": "/_navbar"
+    },
+    "/_onboarding/api_import": {
+      "filePath": "_onboarding/api_import.tsx"
+    },
+    "/_onboarding/legacy_import": {
+      "filePath": "_onboarding/legacy_import.tsx"
+    },
+    "/_onboarding/welcome": {
+      "filePath": "_onboarding/welcome.tsx"
     }
   }
 }

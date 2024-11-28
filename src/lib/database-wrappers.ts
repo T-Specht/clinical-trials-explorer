@@ -25,6 +25,7 @@ import {
   ValueProcessorByRule,
 } from "react-querybuilder";
 import { getKeys } from "./utils";
+import jsonLogic from "json-logic-js";
 
 class MyLogWriter implements LogWriter {
   write(message: string) {
@@ -63,11 +64,29 @@ export const getListOfEntryIds = async () => {
 export const getAllEntries = async () => {
   let res = await database.query.EntryTable.findMany({
     with: {
-      customFieldsData: true,
+      customFieldsData: {
+        with: {
+          customFieldDefinition: true,
+        },
+      },
     },
   });
 
   return res;
+};
+
+export const getAllEntriesWithFlatCustomFields = async () => {
+  const allEntries = await getAllEntries();
+
+  const flat = allEntries.map((e) => ({
+    ...e,
+    ...e.customFieldsData.reduce(
+      (acc, c) => ({ ...acc, [c.customFieldDefinition.idName]: c.value }),
+      {}
+    ),
+  }));
+
+  return flat;
 };
 
 const customFormatQueryFilter = (filter: RuleGroupType) => {
@@ -94,22 +113,37 @@ const customFormatQueryFilter = (filter: RuleGroupType) => {
 };
 
 export const getAllFilteredEntries = async (filter: RuleGroupType) => {
-  const sqlQuery = customFormatQueryFilter(filter);
-  return database
-    .select()
-    .from(EntryTable)
-    .where(sql`${sql.raw(sqlQuery)}`);
+  let query = formatQuery(filter, "jsonlogic");
+  //console.log(query);
+  const flat = await getAllEntriesWithFlatCustomFields();
+
+  if (query) {
+    return flat.filter((e) => jsonLogic.apply(query, e));
+  } else {
+    return flat;
+  }
+
+  // const sqlQuery = customFormatQueryFilter(filter);
+  // return database
+  //   .select()
+  //   .from(EntryTable)
+  //   .where(sql`${sql.raw(sqlQuery)}`);
 };
 
 export const getNumberOfEntriesWithFilter = async (filter: RuleGroupType) => {
-  const sqlQuery = customFormatQueryFilter(filter);
-  let r = await database
-    .select({
-      count: count(),
-    })
-    .from(EntryTable)
-    .where(sql`${sql.raw(sqlQuery)}`);
-  return r[0].count;
+  // const sqlQuery = customFormatQueryFilter(filter);
+  // let r = await database
+  //   .select({
+  //     count: count(),
+  //   })
+  //   .from(EntryTable)
+  //   .where(sql`${sql.raw(sqlQuery)}`);
+  // return r[0].count;
+
+  // Todo: Optimize this
+
+  let all = await getAllFilteredEntries(filter);
+  return all.length;
 };
 
 export const getZustandItem = async (name: string) => {

@@ -73,6 +73,7 @@ const EntryField = (props: {
                 <Checkbox
                 // TODO: Fix this
                   checked={value === 'true'}
+                  disabled={f.isDisabled}
                   id={keyOrId.toString()}
                   onChange={(e) => onChange(e.target.checked)}
                   label={f.label}

@@ -117,7 +117,7 @@ const CField = (props: { field: CustomFieldTypeSelect }) => {
   );
 };
 
-const CustomFieldsForm = (props: {
+export const CustomFieldsForm = (props: {
   initialValues: FormSchema;
   onSubmit: (data: FormSchema, form: UseFormReturn<FormSchema>) => void;
 }) => {
