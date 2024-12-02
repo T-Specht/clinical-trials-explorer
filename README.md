@@ -9,4 +9,4 @@ You can find find [version 1 here](https://github.com/T-Specht/h1ra-repurpose/).
 
 ## Installation
 
-Download and install the version for your operating system from the releases.
+Download and install the version for your operating system [from the releases](https://github.com/T-Specht/clinical-trials-explorer/releases).

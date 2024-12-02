@@ -1,7 +1,7 @@
 {
   "name": "clinical-trials-explorer",
   "productName": "Clinical Trials Explorer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "App to download, explore, annotate and analyze clinical trials",
   "main": ".vite/build/main.js",
   "scripts": {
@@ -25,6 +25,7 @@
     "@electron-forge/plugin-auto-unpack-natives": "^7.4.0",
     "@electron-forge/plugin-fuses": "^7.4.0",
     "@electron-forge/plugin-vite": "^7.4.0",
+    "@electron-forge/publisher-github": "^7.6.0",
     "@electron/fuses": "^1.8.0",
     "@tailwindcss/typography": "^0.5.15",
     "@tanstack/router-devtools": "^1.51.2",
@@ -109,6 +110,7 @@
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",
     "deep-object-diff": "^1.1.9",
+    "dotenv": "^16.4.5",
     "drizzle-orm": "^0.33.0",
     "drizzle-zod": "^0.5.1",
     "electron-settings": "^4.0.4",

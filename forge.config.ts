@@ -8,6 +8,8 @@ import { VitePlugin } from "@electron-forge/plugin-vite";
 import { FusesPlugin } from "@electron-forge/plugin-fuses";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
 
+import "dotenv/config";
+
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
@@ -18,15 +20,24 @@ const config: ForgeConfig = {
   },
   rebuildConfig: {},
   makers: [
-    new MakerSquirrel({
-      
-    }),
-    new MakerDMG({
-      icon: "app-icon.png",
-    } as any),
-    new MakerZIP({}, ["darwin"]),
+    new MakerSquirrel({}),
+    new MakerDMG({} as any),
+    // new MakerZIP({}, ["darwin"]),
     // new MakerRpm({}),
     // new MakerDeb({}),
+  ],
+  publishers: [
+    {
+      name: "@electron-forge/publisher-github",
+      config: {
+        repository: {
+          owner: "T-Specht",
+          name: "clinical-trials-explorer",
+        },
+        draft: true,
+        // generateReleaseNotes: true
+      },
+    },
   ],
   plugins: [
     new VitePlugin({
