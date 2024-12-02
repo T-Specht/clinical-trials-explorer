@@ -6,8 +6,7 @@ import { BotIcon, Brain, LoaderCircle, RefreshCcwIcon } from "lucide-react";
 import { Checkbox, NumberInput, TextInput } from "@mantine/core";
 
 const EntryField = (props: {
-  databaseField?: UIFieldType;
-  customFieldDefinition?: typeof CustomFieldTable.$inferSelect;
+  customFieldDefinition: typeof CustomFieldTable.$inferSelect;
   regenerateAi?: () => void;
   aiData?:
     | {
@@ -19,24 +18,11 @@ const EntryField = (props: {
   onChange: (val: any) => void;
   value: any;
 }) => {
-  const { databaseField, onChange, value, customFieldDefinition: customField } = props;
-  const isDatabaseField = !!databaseField;
+  const { onChange, value, customFieldDefinition: customField } = props;
 
-  if (!!databaseField && !!customField) {
-    throw new Error("Cannot have both databaseField and customField");
-  }
-
-  if (!databaseField && !customField) {
-    throw new Error("Must have either databaseField or customField");
-  }
-
-  const keyOrId = isDatabaseField ? databaseField!.key : customField!.id;
-
-  const f = databaseField || customField!;
-
-  const dataType = !!databaseField
-    ? EntryTable[databaseField.key].dataType
-    : customField?.dataType;
+  const keyOrId = customField.id;
+  const f = customField;
+  const dataType = customField.dataType;
 
   return (
     <div>
@@ -67,12 +53,11 @@ const EntryField = (props: {
             );
 
           case "boolean":
-
             return (
               <div className="my-3 flex items-center space-x-2">
                 <Checkbox
-                // TODO: Fix this
-                  checked={value === 'true'}
+                  // TODO: Fix this
+                  checked={value === "true"}
                   disabled={f.isDisabled}
                   id={keyOrId.toString()}
                   onChange={(e) => onChange(e.target.checked)}

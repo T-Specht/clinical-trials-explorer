@@ -59,6 +59,9 @@ export const PivotDerivedRuleForm = (props: {
     props.rule?.args || {}
   );
 
+  const [description, setDescription] = useState<string | undefined>();
+  const [displayName, setDisplayName] = useState<string | undefined>();
+
   // If this value is null, then do not change it! Field will become disabled because json logic is set to more advanced value.
   const [jsonLogicPathVar, setJsonLogicPathVar] = useState<string | null>(
     () => {
@@ -79,6 +82,8 @@ export const PivotDerivedRuleForm = (props: {
       propertyName,
       func: fnName as any,
       args: cArgs,
+      description,
+      displayName,
       jsonLogic:
         jsonLogicPathVar == null
           ? props.rule?.jsonLogic! // Keep "complex json logic" if it was set and detected
@@ -92,10 +97,24 @@ export const PivotDerivedRuleForm = (props: {
     <form className="space-y-3">
       <TextInput
         value={propertyName}
+        required
         label="Property Name"
         description="The name of the property to derive"
         onChange={(e) => setPropertyName(e.target.value)}
       ></TextInput>
+      <TextInput
+        value={displayName || ""}
+        label="Display Name"
+        description="The name of the property to display in the pivot table"
+        onChange={(e) => setDisplayName(e.target.value)}
+      ></TextInput>
+      <TextInput
+        value={description || ""}
+        label="Description"
+        description="A description of the property"
+        onChange={(e) => setDescription(e.target.value)}
+      ></TextInput>
+
       <Select
         value={fnName}
         description={
@@ -155,6 +174,7 @@ export const PivotDerivedRuleForm = (props: {
 
       <Autocomplete
         disabled={jsonLogicPathVar == null}
+        required
         label="Path to access data"
         value={!!jsonLogicPathVar ? jsonLogicPathVar : ""}
         onChange={(e) => setJsonLogicPathVar(e)}
@@ -205,7 +225,10 @@ export const PivotDerivedRuleForm = (props: {
             size="xs"
             variant="default"
             onClick={() => {
-              if (confirm("Are you sure you want to duplicate this rule?") && props.rule) {
+              if (
+                confirm("Are you sure you want to duplicate this rule?") &&
+                props.rule
+              ) {
                 setPivotDeriveRules([
                   {
                     ...props.rule,
@@ -215,7 +238,8 @@ export const PivotDerivedRuleForm = (props: {
                 ]);
                 notifications.show({
                   title: "Success",
-                  message: "Rule duplicated, you will find it at the top of the list.",
+                  message:
+                    "Rule duplicated, you will find it at the top of the list.",
                   color: "green",
                 });
               }

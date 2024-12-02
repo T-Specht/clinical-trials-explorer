@@ -29,9 +29,6 @@ export const EntryTable = sqliteTable("Entry", {
   notes: text("notes"),
   rawJson: text("raw_json", { mode: "json" }).$type<APIStudyReturn>(),
   history: text("history", { mode: "json" }).$type<EntryHistory[]>(),
-  custom_fields: text("custom_fields", { mode: "json" }).$type<{
-    [id: string]: any;
-  }>(),
 });
 
 export const CustomFieldTable = sqliteTable("CustomField", {

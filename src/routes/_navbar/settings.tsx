@@ -1,5 +1,5 @@
 import Container from "@/components/Container";
-import EditEntryForm from "@/components/EditEntryForm";
+import { mkConfig, generateCsv, download } from "export-to-csv";
 import {
   CustomFieldEntryTable,
   CustomFieldTable,
@@ -14,8 +14,12 @@ import { FIELDS } from "@/lib/fields";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { sql, getTableColumns } from "drizzle-orm";
-import { database } from "@/lib/database-wrappers";
-import { getKeys, isDev } from "@/lib/utils";
+import {
+  database,
+  getAllEntriesWithFlatCustomFields,
+  getCustomFields,
+} from "@/lib/database-wrappers";
+import { getKeys, isDev, omit } from "@/lib/utils";
 import EntryFilter from "@/components/EntryFilter";
 import { Label } from "@/components/ui/label";
 import { useSettingsStore } from "@/lib/zustand";
@@ -66,9 +70,9 @@ export const Route = createFileRoute("/_navbar/settings")({
 
     const settingsStore = useSettingsStore();
 
-    const [modalState, setModalState] = useState<"closed" | "searxng">(
-      "closed"
-    );
+    const [modalState, setModalState] = useState<
+      "closed" | "searxng" | "backup_db"
+    >("closed");
 
     const { setColorScheme, clearColorScheme, colorScheme } =
       useMantineColorScheme();
@@ -198,6 +202,52 @@ export const Route = createFileRoute("/_navbar/settings")({
           ></NumberInput>
         </Group>
 
+        <Title order={4}>Export</Title>
+        <Group>
+          <Button
+            onClick={async () => {
+              if (confirm("Are you sure you want to export all data? This may take a few seconds.")) {
+                const allData = (await getAllEntriesWithFlatCustomFields()).map(
+                  (e) => {
+                    let p = omit(
+                      e,
+                      "customFieldsData",
+                      "rawJson",
+                      "createdAt",
+                      "updatedAt"
+                    );
+                    return {
+                      ...p,
+                      createdAt: e.createdAt.toISOString(),
+                      updatedAt: e.updatedAt.toISOString(),
+                    };
+                  }
+                );
+
+                // console.log(allData);
+
+                const csvConfig = mkConfig({
+                  useKeysAsHeaders: true,
+                  filename: "export_" + new Date().getTime(),
+                });
+
+                const csv = generateCsv(csvConfig)(allData as any);
+
+                download(csvConfig)(csv);
+              }
+            }}
+          >
+            Export data as CSV
+          </Button>
+          <Button
+            onClick={() => {
+              setModalState("backup_db");
+            }}
+          >
+            Backup Database
+          </Button>
+        </Group>
+
         <Title order={4}>Others</Title>
 
         <div>
@@ -207,6 +257,9 @@ export const Route = createFileRoute("/_navbar/settings")({
             </Link>
             <Link to="/pivot-derived-page">
               <Button>Derived Fields Setup</Button>
+            </Link>
+            <Link to="/configure-view">
+              <Button>Configure Entry View</Button>
             </Link>
           </Group>
         </div>
@@ -244,6 +297,15 @@ export const Route = createFileRoute("/_navbar/settings")({
         >
           {(() => {
             switch (modalState) {
+              case "backup_db":
+                return (
+                  <div>
+                    To backup your database, which includes all your data,
+                    custom fields and settings, you can use the application
+                    menu. Click on <Code>Database</Code> and then{" "}
+                    <Code>Save Database Backup</Code>.
+                  </div>
+                );
               case "searxng":
                 return (
                   <div>

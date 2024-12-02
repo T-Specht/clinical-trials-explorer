@@ -10,6 +10,7 @@ import { getZustandItem } from "./database-wrappers";
 import { RuleGroupType } from "react-querybuilder";
 import { PivotConfigSave } from "@/routes/_navbar/pivottable";
 import { PivotDeriveRule, DEFAULT_DERIVED_RULES } from "./pivot-derive";
+import { TypeItemToOrder } from "@/routes/_navbar/configure-view";
 
 // Store Data in Database
 const storage: StateStorage = {
@@ -74,6 +75,8 @@ type SettingsStore = {
   setSeaxngEngines: (value: string) => void;
   searxngMaxResultsPerEngine: number;
   setSearxngMaxResultsPerEngine: (value: number) => void;
+  entryViewConfig: TypeItemToOrder[];
+  setEntryViewConfig: (value: TypeItemToOrder[]) => void;
 };
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -88,6 +91,11 @@ export const useSettingsStore = create<SettingsStore>()(
         combinator: "and",
         rules: [],
       },
+      entryViewConfig: [],
+      setEntryViewConfig: (value) =>
+        set((state) => {
+          state.entryViewConfig = value;
+        }),
       searxngMaxResultsPerEngine: 3,
       setSearxngMaxResultsPerEngine: (value) =>
         set((state) => {

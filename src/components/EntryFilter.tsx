@@ -129,13 +129,13 @@ const EntryFilter = (props: { showCount?: boolean }) => {
 
   return (
     <>
-      {/* <QueryBuilderMantine> */}
+      <QueryBuilderMantine>
       <QueryBuilder
         fields={fields}
         query={query}
         onQueryChange={setQuery}
       ></QueryBuilder>
-      {/* </QueryBuilderMantine> */}
+      </QueryBuilderMantine>
       {!isLoading && props.showCount && (
         <div>
           Number of database entries matching: <code>{data}</code>

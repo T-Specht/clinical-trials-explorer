@@ -5,6 +5,8 @@ import {
 } from "./database-wrappers";
 import dayjs from "dayjs";
 import { z } from "zod";
+import { desc } from "drizzle-orm";
+import { Description } from "@radix-ui/react-dialog";
 
 type SingleEntry = Awaited<ReturnType<typeof getAllEntries>>[0];
 
@@ -152,6 +154,8 @@ export const zodPivotDeriveRuleBaseSchema = z.object({
   func: z.enum(FUNCTION_NAMES),
   args: z.any(),
   jsonLogic: z.custom<jsonLogic.RulesLogic<jsonLogic.AdditionalOperation>>(),
+  displayName: z.string().optional(),
+  description: z.string().optional(),
 });
 
 export type PivotDeriveRule = z.infer<typeof zodPivotDeriveRuleBaseSchema>;

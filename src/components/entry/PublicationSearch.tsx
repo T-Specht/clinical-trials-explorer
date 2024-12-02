@@ -1,6 +1,7 @@
 import { EntryTable } from "@/db/schema";
+import { SingleEntryReturnedByDBWrapper } from "@/lib/database-wrappers";
 import { findPublicationsWithCallbacks } from "@/lib/langchain";
-import { Button, Paper, ScrollArea, Skeleton } from "@mantine/core";
+import { Button, CopyButton, Paper, ScrollArea, Skeleton } from "@mantine/core";
 import { useState } from "react";
 
 const LoadingSkeleton = () => {
@@ -14,7 +15,7 @@ const LoadingSkeleton = () => {
 };
 
 export const PublicationSearch = (props: {
-  entry: typeof EntryTable.$inferSelect;
+  entry: SingleEntryReturnedByDBWrapper;
   disabled?: boolean;
   onLinkClick?: (url: string) => void;
   //customFields: (typeof CustomFieldTable.$inferSelect)[];
@@ -191,16 +192,35 @@ export const PublicationSearch = (props: {
                     <div>
                       <small>{r.authors}</small>
                     </div>
-                    <div
-                      className="mt-2 underline cursor-pointer"
-                      onClick={() => {
-                        console.log(r.url);
-
-                        props.onLinkClick && props.onLinkClick(r.url);
-                      }}
-                    >
+                    <div className="flex space-x-3 items-center">
                       {/* <a href={r.url} target="_blank" className="underline"> */}
-                      Link: {r.source} {r.year}, Confidence: {r.confidence}%
+                      <div
+                        className="mt-2 underline cursor-pointer"
+                        onClick={() => {
+                          console.log(r.url);
+
+                          props.onLinkClick && props.onLinkClick(r.url);
+                        }}
+                      >
+                        Link: {r.source} {r.year}, Confidence: {r.confidence}%{" "}
+                      </div>
+                      <CopyButton value={r.url}>
+                        {({ copied, copy }) => (
+                          <Button
+                            color={copied ? "teal" : "blue"}
+                            variant="light"
+                            size="compact-xs"
+                            onClick={copy}
+                          >
+                            {copied ? "Copied url" : "Copy url"}
+                          </Button>
+                        )}
+                      </CopyButton>
+                      <a href={r.url} target="_blank" rel="noopener noreferrer">
+                        <Button variant="light" size="compact-xs">
+                          Open in Browser
+                        </Button>
+                      </a>
                       {/* </a> */}
                     </div>
                   </Paper>

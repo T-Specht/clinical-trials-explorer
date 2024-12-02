@@ -24,9 +24,9 @@ export const MenuLinksGroup = (props: { className?: string }) => {
       {/* <CustomLink to="/">Home</CustomLink> */}
       <CustomLink to="/settings">Settings</CustomLink>
       {/* <CustomLink to="/jupyter">Jupyter</CustomLink> */}
-      <CustomLink to="/pivottable">Analyze</CustomLink>
-      <CustomLink to="/graphs">Graphs</CustomLink>
-      <CustomLink to="/display_filtered_entries">Entries</CustomLink>
+      <CustomLink to="/pivottable">Analyse</CustomLink>
+      {/* <CustomLink to="/graphs">Graphs</CustomLink> */}
+      <CustomLink to="/display_filtered_entries">Annotate</CustomLink>
     </div>
   );
 };

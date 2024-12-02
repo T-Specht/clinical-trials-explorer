@@ -23,6 +23,7 @@ import { Route as NavbarPivotDerivedPageImport } from './routes/_navbar/pivot-de
 import { Route as NavbarJupyterImport } from './routes/_navbar/jupyter'
 import { Route as NavbarGraphsImport } from './routes/_navbar/graphs'
 import { Route as NavbarCustomfieldsImport } from './routes/_navbar/custom_fields'
+import { Route as NavbarConfigureViewImport } from './routes/_navbar/configure-view'
 
 // Create/Update Routes
 
@@ -86,6 +87,11 @@ const NavbarCustomfieldsRoute = NavbarCustomfieldsImport.update({
   getParentRoute: () => NavbarRoute,
 } as any)
 
+const NavbarConfigureViewRoute = NavbarConfigureViewImport.update({
+  path: '/configure-view',
+  getParentRoute: () => NavbarRoute,
+} as any)
+
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
@@ -110,6 +116,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/display_filtered_entries'
       preLoaderRoute: typeof DisplayfilteredentriesImport
       parentRoute: typeof rootRoute
+    }
+    '/_navbar/configure-view': {
+      id: '/_navbar/configure-view'
+      path: '/configure-view'
+      fullPath: '/configure-view'
+      preLoaderRoute: typeof NavbarConfigureViewImport
+      parentRoute: typeof NavbarImport
     }
     '/_navbar/custom_fields': {
       id: '/_navbar/custom_fields'
@@ -182,6 +195,7 @@ declare module '@tanstack/react-router' {
 export const routeTree = rootRoute.addChildren({
   IndexRoute,
   NavbarRoute: NavbarRoute.addChildren({
+    NavbarConfigureViewRoute,
     NavbarCustomfieldsRoute,
     NavbarGraphsRoute,
     NavbarJupyterRoute,
@@ -217,6 +231,7 @@ export const routeTree = rootRoute.addChildren({
     "/_navbar": {
       "filePath": "_navbar.tsx",
       "children": [
+        "/_navbar/configure-view",
         "/_navbar/custom_fields",
         "/_navbar/graphs",
         "/_navbar/jupyter",
@@ -227,6 +242,10 @@ export const routeTree = rootRoute.addChildren({
     },
     "/display_filtered_entries": {
       "filePath": "display_filtered_entries.tsx"
+    },
+    "/_navbar/configure-view": {
+      "filePath": "_navbar/configure-view.tsx",
+      "parent": "/_navbar"
     },
     "/_navbar/custom_fields": {
       "filePath": "_navbar/custom_fields.tsx",

@@ -72,6 +72,7 @@ const PlotPage = () => {
         onClick={() => {
           refetch();
         }}
+        className="mb-4"
       >
         Regenerate charts
       </Button>
@@ -80,7 +81,7 @@ const PlotPage = () => {
         <div>Loading...</div>
       ) : (
         <div>
-          <CPlot
+          {/* <CPlot
             data={[
               {
                 type: "bar",
@@ -129,7 +130,7 @@ const PlotPage = () => {
             layout={{
               title: "Top 50 HIGH Relevance Mesh Terms Leaves",
             }}
-          ></CPlot>
+          ></CPlot> */}
 
           <CPlot
             data={[

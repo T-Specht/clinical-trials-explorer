@@ -12,47 +12,13 @@ import {
   getAllEntriesWithFlatCustomFields,
   getAllFilteredEntries,
 } from "@/lib/database-wrappers";
-import { Button, Modal, Select } from "@mantine/core";
+import { Button, Checkbox, Group, Modal, Select } from "@mantine/core";
 
 // create Plotly renderers via dependency injection
 const PlotlyRenderers = createPlotlyRenderers(Plot);
 
-const omit = <T extends {}, K extends keyof T>(obj: T, ...keys: K[]) =>
-  Object.fromEntries(
-    Object.entries(obj).filter(([key]) => !keys.includes(key as K))
-  ) as Omit<T, K>;
-
-const pick = <T extends {}, K extends keyof T>(obj: T, ...keys: K[]) =>
-  Object.fromEntries(
-    keys.filter((key) => key in obj).map((key) => [key, obj[key]])
-  ) as Pick<T, K>;
-
-const inclusivePick = <T extends {}, K extends string | number | symbol>(
-  obj: T,
-  ...keys: K[]
-) =>
-  Object.fromEntries(
-    keys.map((key) => [key, obj[key as unknown as keyof T]])
-  ) as { [key in K]: key extends keyof T ? T[key] : undefined };
-
 export const Route = createFileRoute("/_navbar/pivottable")({
   component: () => <PivotTable />,
-  loader: async ({ params }) => {
-    let data = await getAllEntriesWithFlatCustomFields();
-    console.log(data);
-    
-    return data;
-    // return data.map((e) => {
-    //   let ret = {
-    //     ...e,
-    //     ...e.custom_fields,
-    //   };
-
-    //   //@ts-ignore
-    //   delete ret.custom_fields;
-    //   return ret;
-    // });
-  },
 });
 
 const pivotPropsToSaveConfig = (props: PivotTableUIProps) =>
@@ -76,17 +42,38 @@ import { useDisclosure, useLocalStorage } from "@mantine/hooks";
 import { useSettingsStore } from "@/lib/zustand";
 import { useShallow } from "zustand/react/shallow";
 import { notifications } from "@mantine/notifications";
-import { PIVOT_DERIVE_FUNCTIONS, DEFAULT_DERIVED_RULES } from "@/lib/pivot-derive";
+import {
+  PIVOT_DERIVE_FUNCTIONS,
+  DEFAULT_DERIVED_RULES,
+} from "@/lib/pivot-derive";
+import { useQuery } from "@tanstack/react-query";
+import EntryFilter from "@/components/EntryFilter";
+import { pick } from "@/lib/utils";
 
 const PivotTable = () => {
-  const entries = Route.useLoaderData();
-
   const [savedConfigs, setSavedConfigs, pivotDeriveRules] = useSettingsStore(
-    useShallow((s) => [s.savedPivotConfigs, s.setSavedPivotConfigs, s.pivotDeriveRules])
+    useShallow((s) => [
+      s.savedPivotConfigs,
+      s.setSavedPivotConfigs,
+      s.pivotDeriveRules,
+    ])
   );
   const [selectedConfig, setSelectedConfig] = useLocalStorage<string | null>({
     key: "selected_pivot_view_config",
     defaultValue: null,
+  });
+
+  const [useGobalFilter, setUseGlobalFilter] = useState(false);
+
+  const entriesQuery = useQuery({
+    queryKey: ["entries_pivot", useGobalFilter],
+    queryFn: () => {
+      if (useGobalFilter) {
+        return getAllFilteredEntries(useSettingsStore.getState().filter);
+      } else {
+        return getAllEntriesWithFlatCustomFields();
+      }
+    },
   });
 
   const [opened, { open, close }] = useDisclosure(false);
@@ -112,7 +99,7 @@ const PivotTable = () => {
 
   return (
     <div>
-      <div className="flex p-3 space-x-3 items-end">
+      <Group className="p-3 mt-3">
         <Modal
           opened={opened}
           onClose={close}
@@ -158,6 +145,7 @@ const PivotTable = () => {
 
         <Select
           data={savedConfigs.map((c) => c.name)}
+          className="-mt-6" // TODO fix hack to align with button
           value={selectedConfig}
           onChange={(e) => setSelectedConfig(e)}
           label="Select from saved views"
@@ -201,33 +189,62 @@ const PivotTable = () => {
             </Button>
           </>
         )}
+        <Checkbox
+          label="Use global filter"
+          checked={useGobalFilter}
+          onChange={(e) => setUseGlobalFilter(e.target.checked)}
+        ></Checkbox>
         <Link to="/pivot-derived-page" className="!ml-auto">
           <Button size="xs" variant="subtle">
             Setup Derived Fields
           </Button>
         </Link>
-      </div>
+        <Link to="/graphs">
+          <Button size="xs" variant="subtle">
+            Additional Geo Graphs
+          </Button>
+        </Link>
+      </Group>
+      {useGobalFilter && (
+        <div className="p-3">
+          <EntryFilter showCount></EntryFilter>
+          <Button
+            className="my-3"
+            size="xs"
+            onClick={() => {
+              entriesQuery.refetch();
+            }}
+          >
+            Reload data
+          </Button>
+        </div>
+      )}
       <div className="overflow-scroll zoom-50 dark:invert dark:hue-rotate-180 p-3 mb-8">
-        <PivotTableUI
-          {...pivot}
-          data={entries as any}
-          onChange={(s) => setPivot(s)}
-          renderers={Object.assign({}, TableRenderers, PlotlyRenderers)}
-          // derivedAttributes={pivotDeriveRules.reduce<{
-          //   [k: string]: (d: any) => string;
-          // }>((prev, r) => {
-          //   prev[`derived_${r.propertyName}`] = (d) => {
-          //     let fn = PIVOT_DERIVE_FUNCTIONS.find((f) => f.name == r.func);
-          //     if (!fn) return "Error";
-          //     return fn.func(d, r.jsonLogic, r.args);
-          //   };
-          //   return prev;
-          // }, {})}
+        {entriesQuery.isLoading ? (
+          <div>Loading...</div>
+        ) : (
+          <PivotTableUI
+            key={useGobalFilter ? "filtered" : "all"}
+            {...pivot}
+            data={entriesQuery.data as any}
+            onChange={(s) => setPivot(s)}
+            renderers={Object.assign({}, TableRenderers, PlotlyRenderers)}
+            // derivedAttributes={pivotDeriveRules.reduce<{
+            //   [k: string]: (d: any) => string;
+            // }>((prev, r) => {
+            //   prev[`derived_${r.propertyName}`] = (d) => {
+            //     let fn = PIVOT_DERIVE_FUNCTIONS.find((f) => f.name == r.func);
+            //     if (!fn) return "Error";
+            //     return fn.func(d, r.jsonLogic, r.args);
+            //   };
+            //   return prev;
+            // }, {})}
 
-          //   renderers={PivotTable.renderers}
-          //   onChange={(s) => this.setState(s)}
-          //   {...this.state}
-        />
+            //   renderers={PivotTable.renderers}
+            //   onChange={(s) => this.setState(s)}
+            //   {...this.state}
+          />
+        )}
       </div>
     </div>
   );

@@ -107,6 +107,12 @@ const EntryMenu = (props: {
               value={props.jumpPoint}
               onChange={(e) => props.setJumpPoint(e || "")}
             ></Select>
+
+            <Link to="/configure-view">
+              <Button variant="light" mt="md">
+                Configure Entry View
+              </Button>
+            </Link>
           </div>
         </Drawer>
 

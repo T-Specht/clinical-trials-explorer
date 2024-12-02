@@ -39,7 +39,7 @@ export const Route = createRootRoute({
     return (
       <>
         <Outlet />
-        {isDev() && <TanStackRouterDevtools />}
+        {/* {isDev() && <TanStackRouterDevtools />} */}
       </>
     );
   },

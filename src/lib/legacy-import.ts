@@ -152,12 +152,12 @@ export const AWLAYS_CREATE_CUSTOM_FILEDS: (typeof CustomFieldTable.$inferInsert)
         "Is the H1 receptor antagonist being used, tested, or evaluated in this study for any indications outside of its typical use in treating allergies, allergic rhinitis, or urticaria?\n\nIf unsure, respond with “true.”\n\nNote: Drug repurposing (or repositioning) refers to using existing drugs for new therapeutic purposes beyond their conventional indications.",
       description: "Whether the study could be repurposing",
     },
-    {
-      idName: "conditions",
-      dataType: "string",
-      label: "Conditions",
-      description: "Conditions treated with the drug researched",
-    },
+    // {
+    //   idName: "conditions",
+    //   dataType: "string",
+    //   label: "Conditions",
+    //   description: "Conditions treated with the drug researched",
+    // },
     {
       dataType: "string",
       idName: "legacy_search_term",
@@ -334,11 +334,11 @@ export const importLegacyData = async (entries: LegacyExportEntry[]) => {
             entryId: dbId,
             value: le.usecase,
           },
-          {
-            customFieldId: getCustomFieldIdByName("conditions"),
-            entryId: dbId,
-            value: le.conditions.join(", "),
-          },
+          // {
+          //   customFieldId: getCustomFieldIdByName("conditions"),
+          //   entryId: dbId,
+          //   value: le.conditions.join(", "),
+          // },
           ...additionalKeys.map((k) => {
             return {
               customFieldId: getCustomFieldIdByName(k),

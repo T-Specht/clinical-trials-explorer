@@ -112,6 +112,10 @@ export const getAllEntriesWithFlatCustomFields = async () => {
   return flat;
 };
 
+export type SingleEntryReturnedByDBWrapper = Awaited<
+  ReturnType<typeof getAllEntriesWithFlatCustomFields>
+>[number];
+
 const customFormatQueryFilter = (filter: RuleGroupType) => {
   let columns = Object.values(getTableColumns(EntryTable));
   const dateColumnsNames = columns
@@ -184,10 +188,31 @@ export const getCustomFields = async () => {
 export const upsertCustomField = async (
   data: typeof CustomFieldTable.$inferInsert
 ) => {
-  return database.insert(CustomFieldTable).values(data).onConflictDoUpdate({
-    target: CustomFieldTable.id,
-    set: data,
-  });
+  // Enable in view
+
+  let res = await database
+    .insert(CustomFieldTable)
+    .values(data)
+    .onConflictDoUpdate({
+      target: CustomFieldTable.id,
+      set: data,
+    })
+    .returning();
+
+  // Add to view if custom field is just created
+  let state = useSettingsStore.getState();
+  if (!data.id) {
+    state.setEntryViewConfig([
+      {
+        hidden: false,
+        type: "custom_field",
+        propertyNameOrId: res[0].id.toString(),
+      },
+      ...state.entryViewConfig,
+    ]);
+  }
+
+  return res;
 };
 
 export const deleteCustomField = async (id: number) => {
