@@ -35,56 +35,17 @@ const FILTER_FILEDS = Promise.all(
     let name = columns[k].name;
     let c = columns[k];
     let inputType: InputType = (() => {
-      if (c.columnType == "SQLiteBoolean") return "checkbox";
+      //if (c.columnType == "SQLiteBoolean") return "checkbox";
       if (c.columnType == "SQLiteTimestamp") return "datetime-local";
       if (c.columnType == "SQLiteInteger") return "number";
       return "text";
     })();
 
-    // Set filed type to select for these values
-    let valueEditorType: ValueEditorType | undefined = (() => {
-      if (
-        [
-          EntryTable.design_masking,
-          EntryTable.design_intervention_model,
-          EntryTable.design_allocation,
-          EntryTable.design_observation_model,
-          EntryTable.sex,
-        ]
-          .map((c) => c.name)
-          .includes(name)
-      ) {
-        return "select";
-      }
-    })();
-
-    // Get unique values if type is select
-    let values: { name: any }[] = [];
-    if (valueEditorType == "select") {
-      values = await (() => {
-        return database
-          .selectDistinct({
-            name: c,
-          })
-          .from(EntryTable);
-      })();
-    }
-
     return {
       name: columns[k].name,
       label: name,
       inputType,
-      valueEditorType,
       defaultOperator: "contains",
-      values:
-        valueEditorType == "select"
-          ? [
-              {
-                label: "Values",
-                options: values.map((v) => ({ name: v.name, label: v.name })),
-              },
-            ]
-          : undefined,
     } satisfies Field;
   })
 );
@@ -128,6 +89,14 @@ const EntryFilter = (props: { showCount?: boolean }) => {
             defaultOperator: "contains",
           } satisfies Field;
         }),
+        ...(await useSettingsStore.getState().pivotDeriveRules).map((r) => {
+          return {
+            label: "Derived field: " + r.propertyName,
+            name: `derived_${r.propertyName}`,
+            inputType: "text",
+            defaultOperator: "contains",
+          } satisfies Field;
+        }),
         ...Object.entries(getTableColumns(EntryTable)).map((e) => {
           const [key, c] = e;
 
@@ -160,13 +129,13 @@ const EntryFilter = (props: { showCount?: boolean }) => {
 
   return (
     <>
-      <QueryBuilderMantine>
-        <QueryBuilder
-          fields={fields}
-          query={query}
-          onQueryChange={setQuery}
-        ></QueryBuilder>
-      </QueryBuilderMantine>
+      {/* <QueryBuilderMantine> */}
+      <QueryBuilder
+        fields={fields}
+        query={query}
+        onQueryChange={setQuery}
+      ></QueryBuilder>
+      {/* </QueryBuilderMantine> */}
       {!isLoading && props.showCount && (
         <div>
           Number of database entries matching: <code>{data}</code>

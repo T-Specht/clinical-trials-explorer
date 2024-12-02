@@ -259,7 +259,12 @@ export const importLegacyData = async (entries: LegacyExportEntry[]) => {
 
       // Insert then get
 
-      await insertStudiesIntoDatabase([curr]);
+      await insertStudiesIntoDatabase([curr], undefined, undefined, {
+        date: new Date().toISOString(),
+        type: "legacy",
+        data: le,
+        desc: "Legacy import",
+      });
       const dbId = (
         await database.query.EntryTable.findFirst({
           where: (table, { eq }) => eq(table.nctId, le.NCTId),

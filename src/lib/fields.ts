@@ -39,24 +39,24 @@ export const CUSTOM_FIELDS_SEED: (typeof CustomFieldTable.$inferInsert)[] = [
 ];
 
 export const FIELDS: UIFieldType[] = [
-  {
-    key: "design_masking",
-    label: "Design Masking",
-    isDisabled: true,
-    description: "This field is disabled",
-  },
-  {
-    key: "design_observation_model",
-    label: "Design Observation Model",
-  },
-  {
-    key: "enrollmentCount",
-    label: "Enrollment Count",
-  },
-  {
-    key: "sex",
-    label: "Sex of people",
-  },
+  // {
+  //   key: "design_masking",
+  //   label: "Design Masking",
+  //   isDisabled: true,
+  //   description: "This field is disabled",
+  // },
+  // {
+  //   key: "design_observation_model",
+  //   label: "Design Observation Model",
+  // },
+  // {
+  //   key: "enrollmentCount",
+  //   label: "Enrollment Count",
+  // },
+  // {
+  //   key: "sex",
+  //   label: "Sex of people",
+  // },
 ];
 
 export const buildAiReturnSchemaForCustomFields = (

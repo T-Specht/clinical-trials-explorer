@@ -39,6 +39,8 @@ export const Route = createFileRoute("/_navbar/pivottable")({
   component: () => <PivotTable />,
   loader: async ({ params }) => {
     let data = await getAllEntriesWithFlatCustomFields();
+    console.log(data);
+    
     return data;
     // return data.map((e) => {
     //   let ret = {
@@ -74,7 +76,7 @@ import { useDisclosure, useLocalStorage } from "@mantine/hooks";
 import { useSettingsStore } from "@/lib/zustand";
 import { useShallow } from "zustand/react/shallow";
 import { notifications } from "@mantine/notifications";
-import { PIVOT_DERIVE_FUNCTIONS, SAMPLE_RULES } from "@/lib/pivot-derive";
+import { PIVOT_DERIVE_FUNCTIONS, DEFAULT_DERIVED_RULES } from "@/lib/pivot-derive";
 
 const PivotTable = () => {
   const entries = Route.useLoaderData();
@@ -211,16 +213,16 @@ const PivotTable = () => {
           data={entries as any}
           onChange={(s) => setPivot(s)}
           renderers={Object.assign({}, TableRenderers, PlotlyRenderers)}
-          derivedAttributes={pivotDeriveRules.reduce<{
-            [k: string]: (d: any) => string;
-          }>((prev, r) => {
-            prev[`derived_${r.propertyName}`] = (d) => {
-              let fn = PIVOT_DERIVE_FUNCTIONS.find((f) => f.name == r.func);
-              if (!fn) return "Error";
-              return fn.func(d, r.jsonLogic, r.args);
-            };
-            return prev;
-          }, {})}
+          // derivedAttributes={pivotDeriveRules.reduce<{
+          //   [k: string]: (d: any) => string;
+          // }>((prev, r) => {
+          //   prev[`derived_${r.propertyName}`] = (d) => {
+          //     let fn = PIVOT_DERIVE_FUNCTIONS.find((f) => f.name == r.func);
+          //     if (!fn) return "Error";
+          //     return fn.func(d, r.jsonLogic, r.args);
+          //   };
+          //   return prev;
+          // }, {})}
 
           //   renderers={PivotTable.renderers}
           //   onChange={(s) => this.setState(s)}

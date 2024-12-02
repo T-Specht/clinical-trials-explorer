@@ -15,6 +15,8 @@ const LoadingSkeleton = () => {
 
 export const PublicationSearch = (props: {
   entry: typeof EntryTable.$inferSelect;
+  disabled?: boolean;
+  onLinkClick?: (url: string) => void;
   //customFields: (typeof CustomFieldTable.$inferSelect)[];
 }) => {
   const input = {
@@ -45,7 +47,6 @@ export const PublicationSearch = (props: {
       url: string;
       title: string;
       authors: string[] | undefined;
-      score: number;
       engine: string;
     }[]
   >([]);
@@ -54,7 +55,7 @@ export const PublicationSearch = (props: {
     <div className="my-3">
       <Button
         loading={step != "initial" && step != "finished"}
-        disabled={step != "initial" && step != "finished"}
+        disabled={(step != "initial" && step != "finished") || props.disabled}
         onClick={async () => {
           const isSecondRun = step == "finished";
           setStep("started");
@@ -83,9 +84,7 @@ export const PublicationSearch = (props: {
                 setStep("finished_searchx");
               },
             },
-            isSecondRun
-              ? ["internetarchivescholar", "arxiv"]
-              : [] // Add google as a search engine in the second run to increase the chances of finding something
+            isSecondRun ? ["internetarchivescholar", "arxiv"] : [] // Add google as a search engine in the second run to increase the chances of finding something
           );
           console.log(res);
         }}
@@ -105,6 +104,20 @@ export const PublicationSearch = (props: {
             searches. If nothing is found, it does not mean that there aren't
             any publications available.
           </small>
+          {props.disabled && (
+            <div>
+              <small>
+                <b>
+                  <span className="text-red">
+                    This feature is currently disabled!{" "}
+                  </span>
+                  You need to enable AI features, provide an API Key for your
+                  selected AI Provider and set a searxng base url in the
+                  settings to use this feature.
+                </b>
+              </small>
+            </div>
+          )}
         </div>
       )}
 
@@ -178,10 +191,17 @@ export const PublicationSearch = (props: {
                     <div>
                       <small>{r.authors}</small>
                     </div>
-                    <div className="mt-2">
-                      <a href={r.url} target="_blank" className="underline">
-                        Link: {r.source} {r.year}, Confidence: {r.confidence}%
-                      </a>
+                    <div
+                      className="mt-2 underline cursor-pointer"
+                      onClick={() => {
+                        console.log(r.url);
+
+                        props.onLinkClick && props.onLinkClick(r.url);
+                      }}
+                    >
+                      {/* <a href={r.url} target="_blank" className="underline"> */}
+                      Link: {r.source} {r.year}, Confidence: {r.confidence}%
+                      {/* </a> */}
                     </div>
                   </Paper>
                 ))}

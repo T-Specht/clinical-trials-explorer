@@ -9,7 +9,7 @@ import { eq } from "drizzle-orm";
 import { getZustandItem } from "./database-wrappers";
 import { RuleGroupType } from "react-querybuilder";
 import { PivotConfigSave } from "@/routes/_navbar/pivottable";
-import { PivotDeriveRule, SAMPLE_RULES } from "./pivot-derive";
+import { PivotDeriveRule, DEFAULT_DERIVED_RULES } from "./pivot-derive";
 
 // Store Data in Database
 const storage: StateStorage = {
@@ -47,6 +47,8 @@ const storage: StateStorage = {
   },
 };
 
+export type AIProviders = "openai" | "anthropic" | "disabled";
+
 type SettingsStore = {
   jumpPoint: string;
   setJumpPoint: (value: string) => void;
@@ -56,6 +58,8 @@ type SettingsStore = {
   setOpenAIKey: (value: string | null) => void;
   openAIModelName: string;
   setOpenAIModelName: (value: string) => void;
+  aiProvider: AIProviders;
+  setAiProvider: (value: AIProviders) => void;
   onboardingComplete: boolean;
   setOnboardingComplete: (value: boolean) => void;
   savedPivotConfigs: { name: string; config: PivotConfigSave }[];
@@ -64,6 +68,12 @@ type SettingsStore = {
   ) => void;
   pivotDeriveRules: PivotDeriveRule[];
   setPivotDeriveRules: (value: PivotDeriveRule[]) => void;
+  searxngUrl: string;
+  setSearxngUrl: (value: string) => void;
+  searxngEngines: string;
+  setSeaxngEngines: (value: string) => void;
+  searxngMaxResultsPerEngine: number;
+  setSearxngMaxResultsPerEngine: (value: number) => void;
 };
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -78,6 +88,27 @@ export const useSettingsStore = create<SettingsStore>()(
         combinator: "and",
         rules: [],
       },
+      searxngMaxResultsPerEngine: 3,
+      setSearxngMaxResultsPerEngine: (value) =>
+        set((state) => {
+          state.searxngMaxResultsPerEngine = value;
+        }),
+      searxngEngines:
+        "pubmed,semantic scholar,openairepublications,google_scholar",
+      setSeaxngEngines: (value) =>
+        set((state) => {
+          state.searxngEngines = value;
+        }),
+      searxngUrl: "",
+      setSearxngUrl: (value) =>
+        set((state) => {
+          state.searxngUrl = value;
+        }),
+      aiProvider: "disabled",
+      setAiProvider: (value) =>
+        set((state) => {
+          state.aiProvider = value;
+        }),
       setFilter: (newFilter) =>
         set((state) => {
           state.filter = newFilter;
@@ -87,7 +118,7 @@ export const useSettingsStore = create<SettingsStore>()(
         set((state) => {
           state.openAIKey = value;
         }),
-      openAIModelName: "gpt-4o-mini",
+      openAIModelName: "", // Blank to use default
       setOpenAIModelName: (value) =>
         set((state) => {
           state.openAIModelName = value;
@@ -102,7 +133,7 @@ export const useSettingsStore = create<SettingsStore>()(
         set((state) => {
           state.savedPivotConfigs = value;
         }),
-      pivotDeriveRules: SAMPLE_RULES,
+      pivotDeriveRules: DEFAULT_DERIVED_RULES,
       setPivotDeriveRules: (value) =>
         set((state) => {
           state.pivotDeriveRules = value;

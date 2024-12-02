@@ -1,8 +1,18 @@
 //import { pgTable, integer, text, timestamp, boolean, doublePrecision, varchar, uniqueIndex, serial, foreignKey, pgEnum } from "drizzle-orm/pg-core"
 import { APIStudyReturn } from "@/lib/api";
+import { LegacyExportEntry } from "@/lib/legacy-import";
 import { desc, relations, sql } from "drizzle-orm";
 
 import { text, integer, sqliteTable, numeric } from "drizzle-orm/sqlite-core";
+
+export type EntryHistory =
+  | { date: string; desc?: string; type: "legacy"; data: LegacyExportEntry }
+  | {
+      date: string;
+      desc?: string;
+      type: "new_version";
+      data: APIStudyReturn;
+    };
 
 export const EntryTable = sqliteTable("Entry", {
   id: integer("id").primaryKey().notNull(),
@@ -18,17 +28,10 @@ export const EntryTable = sqliteTable("Entry", {
   description: text("description"),
   notes: text("notes"),
   rawJson: text("raw_json", { mode: "json" }).$type<APIStudyReturn>(),
+  history: text("history", { mode: "json" }).$type<EntryHistory[]>(),
   custom_fields: text("custom_fields", { mode: "json" }).$type<{
     [id: string]: any;
   }>(),
-  firstMeshTerm: text("first_mesh_term"),
-  enrollmentCount: integer("enrollment_count"),
-  sex: text("sex"),
-  phase: text("phase"),
-  design_allocation: text("design_allocation"),
-  design_intervention_model: text("design_intervention_model"),
-  design_masking: text("design_masking"),
-  design_observation_model: text("design_observation_model"),
 });
 
 export const CustomFieldTable = sqliteTable("CustomField", {
@@ -61,8 +64,12 @@ export const CustomFieldEntryTable = sqliteTable("CustomFieldEntry", {
     .default(new Date())
     .$onUpdate(() => new Date())
     .notNull(),
-  customFieldId: integer("custom_field_id").references(() => CustomFieldTable.id).notNull(),
-  entryId: integer("entry_id").references(() => EntryTable.id).notNull(),
+  customFieldId: integer("custom_field_id")
+    .references(() => CustomFieldTable.id)
+    .notNull(),
+  entryId: integer("entry_id")
+    .references(() => EntryTable.id)
+    .notNull(),
   value: text("value"),
 });
 
@@ -79,21 +86,23 @@ export const PersistentZustandTable = sqliteTable("PersistentZustand", {
   data: text("data"),
 });
 
-export const entriesRelation = relations(EntryTable, ({many}) => ({
+export const entriesRelation = relations(EntryTable, ({ many }) => ({
   customFieldsData: many(CustomFieldEntryTable),
 }));
 
-export const customFieldsDataRelation = relations(CustomFieldEntryTable, ({one}) => ({
-  entry: one(EntryTable, {
+export const customFieldsDataRelation = relations(
+  CustomFieldEntryTable,
+  ({ one }) => ({
+    entry: one(EntryTable, {
       fields: [CustomFieldEntryTable.entryId],
-      references: [EntryTable.id]
-  }),
-  customFieldDefinition: one(CustomFieldTable, {
+      references: [EntryTable.id],
+    }),
+    customFieldDefinition: one(CustomFieldTable, {
       fields: [CustomFieldEntryTable.customFieldId],
-      references: [CustomFieldTable.id]
+      references: [CustomFieldTable.id],
+    }),
   })
-}));
-
+);
 
 // export const entry = sqliteTable("Entry", {
 //   test_field: text("test_field").default("hallo"),

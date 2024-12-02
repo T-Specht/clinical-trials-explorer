@@ -50,7 +50,9 @@ import { generateMetaData } from "@/lib/langchain";
 import { notifications } from "@mantine/notifications";
 import {
   Badge,
+  Button,
   Pill,
+  Group,
   ScrollArea,
   Title,
   useComputedColorScheme,
@@ -58,6 +60,7 @@ import {
 import { cn } from "@/lib/utils";
 import { searxng_api_search } from "@/lib/searxng_api";
 import { PublicationSearch } from "./PublicationSearch";
+import { Redo2 } from "lucide-react";
 
 (window as any)["searxng_api_search"] = searxng_api_search;
 
@@ -68,16 +71,23 @@ const Entry = (props: {
   children?: React.ReactNode;
   className?: string;
 }) => {
-  const [jumpPoint, setJumpPoint, openAIKey] = useSettingsStore(
-    useShallow((s) => [s.jumpPoint, s.setJumpPoint, s.openAIKey])
-  );
+  const [jumpPoint, setJumpPoint, openAIKey, aiProvider, searxngUrl] =
+    useSettingsStore(
+      useShallow((s) => [
+        s.jumpPoint,
+        s.setJumpPoint,
+        s.openAIKey,
+        s.aiProvider,
+        s.searxngUrl,
+      ])
+    );
   const filter = useSettingsStore((s) => s.filter);
 
   const [selectedFields, setSelectedFields] = useState<typeof FIELDS>(
     // "selected_fields",
     FIELDS
   );
-  const [selectedFieldQuery, setSelectedFieldsQuery] = useState("");
+  const [displayOtherUrl, setDisplayOtherUrl] = useState<null | string>(null);
 
   const [current, updateCurrent] = useState(props.entry);
   const [customFieldDataCurrent, updateCustomFieldDataCurrent] = useState(
@@ -89,7 +99,7 @@ const Entry = (props: {
 
   const aiQuery = useQuery({
     queryKey: ["ai_meta", current.id, current.createdAt],
-    enabled: !!openAIKey,
+    enabled: !!openAIKey && aiProvider != "disabled",
     queryFn: () => {
       const schema = buildAiReturnSchemaForCustomFields(props.customFields);
 
@@ -301,6 +311,7 @@ const Entry = (props: {
                 return (
                   <EntryField
                     aiStatus={
+                      aiProvider == "disabled" ||
                       !openAIKey ||
                       !f.aiDescription ||
                       f.aiDescription?.trim() == ""
@@ -322,7 +333,11 @@ const Entry = (props: {
             </div>
 
             <div>
-              <PublicationSearch entry={props.entry}></PublicationSearch>
+              <PublicationSearch
+                entry={props.entry}
+                disabled={aiProvider == "disabled" || searxngUrl.trim() == ""}
+                onLinkClick={(url) => setDisplayOtherUrl(url)}
+              ></PublicationSearch>
             </div>
 
             <div className="font-mono text-[12px] dark:invert">
@@ -344,11 +359,25 @@ const Entry = (props: {
         <ResizablePanel>
           <ResizablePanelGroup direction="vertical" autoSaveId="layout2">
             <ResizablePanel className="">
-              <iframe
-                // src={`http://localhost:${PROXY_PORT}/study/${current.nctId}${jumpPoint}`}
-                src={`https://clinicaltrials.gov/study/${current.nctId}${jumpPoint}`}
-                className="w-full h-full border-none dark:invert-[95%] dark:hue-rotate-180"
-              ></iframe>
+              <div className="h-full flex flex-col">
+                {displayOtherUrl && (
+                  <div className="p-2">
+                    <Group>
+                      <Button size="xs" variant="light" onClick={() => setDisplayOtherUrl(null)}>
+                        <Redo2 size={15} className="mr-2"></Redo2> Go back to clinical trial page
+                      </Button>
+                    </Group>
+                  </div>
+                )}
+                <iframe
+                  // src={`http://localhost:${PROXY_PORT}/study/${current.nctId}${jumpPoint}`}
+                  src={
+                    displayOtherUrl ||
+                    `https://clinicaltrials.gov/study/${current.nctId}${jumpPoint}`
+                  }
+                  className="w-full h-full border-none dark:invert-[95%] dark:hue-rotate-180"
+                ></iframe>
+              </div>
             </ResizablePanel>
             <Handle></Handle>
             <ResizablePanel

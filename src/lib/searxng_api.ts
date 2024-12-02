@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useSettingsStore } from "./zustand";
 
 export type SearxngAPIResponse = {
   query: string;
@@ -38,15 +39,12 @@ export async function searxng_api_search(
   q: string,
   limit = 5,
   options: Partial<{
-    engines: string;
-    categories: string
-  }> = {
-    //engines: "pubmed,semantic scholar,openairepublications,google_scholar",
-    categories: 'science'
-  }
+    engines: string; // e.g. 'pubmed,semantic scholar,openairepublications,google_scholar
+    categories: string; // e.g. 'science'
+  }>
 ) {
   let results: SearxngAPIResponse = (
-    await axios.get("https://search.specht.io/search", {
+    await axios.get(useSettingsStore.getState().searxngUrl, {
       params: {
         q,
         format: "json",

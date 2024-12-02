@@ -6,26 +6,54 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { useSettingsStore } from "./zustand";
 import { searxng_api_search } from "./searxng_api";
+import { ChatAnthropic } from "@langchain/anthropic";
+
 // import { ChatAnthropicTools } from "@langchain/anthropic/experimental";
 
 // import { searxng_api_search } from "./searxng_api";
 
-const DEFAULT_MODEL = "gpt-4o-mini";
+export const DEFAULT_AI_MODELS = {
+  openai: "gpt-4o-mini",
+  anthropic: "claude-3-5-haiku-latest",
+  disabled: "",
+};
 
 const getModel = (temp = 0) => {
-  const { openAIKey, openAIModelName } = useSettingsStore.getState();
+  const { openAIKey, openAIModelName, aiProvider } =
+    useSettingsStore.getState();
 
-  return new ChatOpenAI({
-    modelName: openAIModelName || DEFAULT_MODEL,
-    temperature: temp,
-    openAIApiKey: openAIKey || "",
-  });
+  const model =
+    openAIModelName.trim() != ""
+      ? openAIModelName
+      : DEFAULT_AI_MODELS[aiProvider];
+
+  if (aiProvider === "anthropic") {
+    return new ChatAnthropic({
+      model,
+      temperature: temp,
+      anthropicApiKey: openAIKey || "",
+    });
+  }
+
+  if (aiProvider === "openai") {
+    return new ChatOpenAI({
+      modelName: model,
+      temperature: temp,
+      openAIApiKey: openAIKey || "",
+    });
+  }
+
+  return null;
 
   //return new ChatAnthropic({});
 };
 
 export async function generateAISearchQueries(input: string) {
   const model = getModel(0.5);
+
+  if (!model) {
+    throw new Error("No model selected");
+  }
 
   const queryGenerationSchema = z.object({
     queries: z.array(z.string()).describe("search queries"),
@@ -52,6 +80,9 @@ export async function generateAISearchQueries(input: string) {
 
 async function extractPapers(input: string, references: string) {
   const model = getModel(0.5);
+  if (!model) {
+    throw new Error("No model selected");
+  }
 
   const schema = z.object({
     result: z
@@ -112,7 +143,11 @@ export async function generateMetaData<T extends z.ZodRawShape>(
   input: string,
   returnSchema: z.ZodObject<T>
 ) {
-  const model = getModel(0).withStructuredOutput(returnSchema).withRetry({
+  const baseModel = getModel(0);
+  if (!baseModel) {
+    throw new Error("No model selected");
+  }
+  const model = baseModel.withStructuredOutput(returnSchema).withRetry({
     stopAfterAttempt: 3,
   });
 
@@ -153,26 +188,26 @@ export async function generateMetaData<T extends z.ZodRawShape>(
   return result;
 }
 
-export async function findPublications(input: string) {
-  //Get search results
-  const queries = await generateAISearchQueries(input);
-  const references = (
-    await Promise.all(
-      queries.map(async (query) => await searxng_api_search(query))
-    )
-  )
-    .flat()
-    .map((r) => {
-      const { content, url, title, authors, score, engine } = r;
-      return { content, url, title, authors, score, engine };
-    })
-    .filter((e, i, self) => {
-      const index = self.findIndex((t) => t.title === e.title);
-      return index === i;
-    });
-  const matched = await extractPapers(input, JSON.stringify(references));
-  return matched;
-}
+// export async function findPublications(input: string) {
+//   //Get search results
+//   const queries = await generateAISearchQueries(input);
+//   const references = (
+//     await Promise.all(
+//       queries.map(async (query) => await searxng_api_search(query))
+//     )
+//   )
+//     .flat()
+//     .map((r) => {
+//       const { content, url, title, authors, score, engine } = r;
+//       return { content, url, title, authors, score, engine };
+//     })
+//     .filter((e, i, self) => {
+//       const index = self.findIndex((t) => t.title === e.title);
+//       return index === i;
+//     });
+//   const matched = await extractPapers(input, JSON.stringify(references));
+//   return matched;
+// }
 
 export async function findPublicationsWithCallbacks(
   input: string,
@@ -184,7 +219,6 @@ export async function findPublicationsWithCallbacks(
         url: string;
         title: string;
         authors: string[] | undefined;
-        score: number;
         engine: string;
       }[]
     ) => any;
@@ -205,14 +239,16 @@ export async function findPublicationsWithCallbacks(
   const queries = await generateAISearchQueries(input);
   callbacks.queries(queries);
 
+  const { searxngEngines, searxngMaxResultsPerEngine } =
+    useSettingsStore.getState();
+
   const references = (
     await Promise.all(
       queries.map(
         async (query) =>
-          await searxng_api_search(query, 3, {
-            engines:
-              "pubmed,semantic scholar,openairepublications,google_scholar" +
-              addEngines.join(","),
+          // Search english (:en)
+          await searxng_api_search(`:en ${query}`, searxngMaxResultsPerEngine, {
+            engines: searxngEngines + addEngines.join(","),
             categories: "science", // TODO
           })
       )
@@ -220,13 +256,13 @@ export async function findPublicationsWithCallbacks(
   )
     .flat()
     .map((r) => {
-      const { content, url, title, authors, score, engine } = r;
-      return { content, url, title, authors, score, engine };
-    })
-    .filter((e, i, self) => {
-      const index = self.findIndex((t) => t.title === e.title);
-      return index === i;
+      const { content, url, title, authors, engine } = r;
+      return { content, url, title, authors, engine };
     });
+  // .filter((e, i, self) => {
+  //   const index = self.findIndex((t) => t.title === e.title);
+  //   return index === i;
+  // });
 
   callbacks.rawReferences(references);
 

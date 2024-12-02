@@ -101,3 +101,5 @@ drizzle/*
 .vscode
 
 !.gitkeep
+
+searxng-data/

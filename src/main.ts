@@ -29,9 +29,13 @@ import { getLastOpenDbPath, setLastOpenDbPath } from "./main_process/settings";
 if (require("electron-squirrel-startup")) {
   app.quit();
 }
+const IS_DEV = process.env.NODE_ENV === "development";
+
+const basePath = IS_DEV ? '.' : process.resourcesPath;
+
 
 //const jupyter = startJupyter();
-const ICON_PATH = "/Users/tim/Code/JS/clinical-trials-explorer/app-icon.png";
+const ICON_PATH = path.join(basePath, "app-icon.png");
 
 const createWindow = async () => {
   // Create the browser window.
@@ -89,9 +93,9 @@ const createWindow = async () => {
 
   //proxy.listen(PROXY_PORT);
 
-  mainWindow.on('page-title-updated', e => e.preventDefault())
+  mainWindow.on("page-title-updated", (e) => e.preventDefault());
 
-  return mainWindow
+  return mainWindow;
 };
 
 // This method will be called when Electron has finished
@@ -117,7 +121,6 @@ app.on("ready", async () => {
 
   let w = await createWindow();
   w.setTitle(`Clinical Trials Explorer - ${getCurrentDbPath()}`);
-
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common

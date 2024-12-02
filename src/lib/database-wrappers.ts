@@ -26,6 +26,8 @@ import {
 } from "react-querybuilder";
 import { getKeys } from "./utils";
 import jsonLogic from "json-logic-js";
+import { useSettingsStore } from "./zustand";
+import { PIVOT_DERIVE_FUNCTIONS } from "./pivot-derive";
 
 class MyLogWriter implements LogWriter {
   write(message: string) {
@@ -63,6 +65,9 @@ export const getListOfEntryIds = async () => {
 
 export const getAllEntries = async () => {
   let res = await database.query.EntryTable.findMany({
+    columns: {
+      history: false,
+    },
     with: {
       customFieldsData: {
         with: {
@@ -85,6 +90,24 @@ export const getAllEntriesWithFlatCustomFields = async () => {
       {}
     ),
   }));
+
+  // Add derived fields
+
+  const derivedFields = useSettingsStore.getState().pivotDeriveRules;
+
+  for (let entry of flat) {
+    for (let r of derivedFields) {
+      let fn = PIVOT_DERIVE_FUNCTIONS.find((f) => f.name == r.func);
+      if (fn) {
+        // Entry is augmented with derived fields, they are prefixed with `derived_` and will not be used in the code. Only for user
+        (entry as any)[`derived_${r.propertyName}`] = fn.func(
+          entry,
+          r.jsonLogic,
+          r.args
+        );
+      }
+    }
+  }
 
   return flat;
 };
@@ -114,7 +137,8 @@ const customFormatQueryFilter = (filter: RuleGroupType) => {
 
 export const getAllFilteredEntries = async (filter: RuleGroupType) => {
   let query = formatQuery(filter, "jsonlogic");
-  //console.log(query);
+
+  console.log(query);
   const flat = await getAllEntriesWithFlatCustomFields();
 
   if (query) {
@@ -227,7 +251,8 @@ export const getNumberOfEntries = async () => {
 export const insertStudiesIntoDatabase = async (
   studies: APIStudyReturn[],
   errorCallback?: (e: string) => any,
-  progressCallback?: (p: number) => any
+  progressCallback?: (p: number) => any,
+  history?: schema.EntryHistory
 ) => {
   for (const [i, study] of studies.entries()) {
     const idm = study.identificationModule;
@@ -237,16 +262,7 @@ export const insertStudiesIntoDatabase = async (
       description: study.descriptionModule?.briefSummary,
       nctId: idm?.nctId,
       title: idm?.briefTitle || idm?.officialTitle,
-      firstMeshTerm: study.interventionBrowseModule?.meshes?.at(0)?.term || "",
-      enrollmentCount: study.designModule?.enrollmentInfo?.count,
-      design_allocation: study.designModule?.designInfo?.allocation,
-      design_intervention_model:
-        study.designModule?.designInfo?.interventionModel,
-      design_masking: study.designModule?.designInfo?.maskingInfo?.masking,
-      design_observation_model:
-        study.designModule?.designInfo?.observationalModel,
-      phase: study.designModule?.phases?.at(0),
-      sex: study.eligibilityModule?.sex,
+      history: history ? [history] : [],
     } satisfies Partial<typeof EntryTable.$inferInsert>;
 
     let validation = insertSchema.safeParse(potentialInsert);
