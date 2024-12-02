@@ -97,7 +97,7 @@ sqlite.db
 .ipynb_checkpoints
 
 # For now until stable database schema
-drizzle/*
+#drizzle/*
 .vscode
 
 !.gitkeep

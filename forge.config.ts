@@ -13,7 +13,7 @@ const config: ForgeConfig = {
     asar: true,
     //extraResource: ["drizzle", "include"],
     extraResource: ["drizzle", "app-icon.png"],
-    icon: "./app-icon.png",
+    icon: "./icons/icon",
     // osxSign: {}
   },
   rebuildConfig: {},
