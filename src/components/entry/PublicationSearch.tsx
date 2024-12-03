@@ -108,7 +108,7 @@ export const PublicationSearch = (props: {
         <a
           href={`https://www.google.com/search?q=${encodeURIComponent(
             `${props.entry.nctId} OR (${props.entry.title} ${
-              props.entry.rawJson?.contactsLocationsModule?.centralContacts?.at(
+              props.entry.rawJson?.contactsLocationsModule?.overallOfficials?.at(
                 0
               )?.name || ""
             }) pubmed`
