@@ -371,7 +371,7 @@ const Entry = (props: {
 
                   return (
                     <EntryField
-                      autocomplete={acValues}
+                      autocomplete={f.autocompleteEnabled ? acValues : null}
                       aiStatus={
                         aiProvider == "disabled" ||
                         !openAIKey ||

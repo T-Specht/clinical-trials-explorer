@@ -17,7 +17,7 @@ const EntryField = (props: {
   aiStatus: "loading" | "disabled" | "data";
   onChange: (val: any) => void;
   value: any;
-  autocomplete?: string[];
+  autocomplete?: string[] | null;
 }) => {
   const { onChange, value, customFieldDefinition: customField } = props;
 
@@ -42,17 +42,30 @@ const EntryField = (props: {
             );
 
           case "string":
-            return (
-              <div>
-                <Autocomplete
-                  label={f.label}
-                  value={value || ""}
-                  onChange={(val) => onChange(val)}
-                  data={props.autocomplete || []}
-                  disabled={f.isDisabled}
-                />
-              </div>
-            );
+            if (props.autocomplete) {
+              return (
+                <div>
+                  <Autocomplete
+                    label={f.label}
+                    value={value || ""}
+                    onChange={(val) => onChange(val)}
+                    data={props.autocomplete || []}
+                    disabled={f.isDisabled}
+                  />
+                </div>
+              );
+            } else {
+              return (
+                <div>
+                  <TextInput
+                    label={f.label}
+                    value={value || ""}
+                    onChange={(e) => onChange(e.target.value)}
+                    disabled={f.isDisabled}
+                  />
+                </div>
+              );
+            }
 
           case "boolean":
             return (

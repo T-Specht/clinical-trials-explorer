@@ -5,7 +5,7 @@ import * as schema from "./schema";
 import fs from "fs";
 import { app, BrowserWindow, dialog } from "electron";
 import path, { join, resolve } from "path";
-import { DefaultLogger, LogWriter } from "drizzle-orm";
+import { DefaultLogger, LogWriter, sql } from "drizzle-orm";
 import { setLastOpenDbPath } from "../main_process/settings";
 import { selectDbFileWithDialog } from "../main_process/app_menu";
 
@@ -69,16 +69,14 @@ export const execute = async (
     throw new Error("No database connected.");
   }
 
-  if(IS_DEV) {
+  if (IS_DEV) {
     console.log(sqlstr, params);
-    console.log('\n\n\n')
-  } 
+    console.log("\n\n\n");
+  }
 
   const result = sqlite.prepare(sqlstr);
   //@ts-expect-error asdhkjashdkj
   const ret = result[method](...params);
-
-
 
   //console.log(ret);
 
@@ -93,12 +91,15 @@ export const runMigrate = async () => {
   fs.mkdirSync(DEFAULT_BACKUP_PATH, { recursive: true });
   await sqlite?.backup(join(DEFAULT_BACKUP_PATH, `backup-${Date.now()}.db`));
 
+  db.run(sql`PRAGMA foreign_keys=OFF;`)
   try {
     migrate(db, {
       migrationsFolder: migrationsFolder,
     });
   } catch (error) {
     dialog.showErrorBox("Migration Error", (error as any).message);
+  } finally {
+    db.run(sql`PRAGMA foreign_keys=ON;`)
   }
 };
 

@@ -25,9 +25,9 @@ const config: ForgeConfig = {
       teamId: process.env.APPLE_TEAM_ID!,
     },
   },
-  rebuildConfig: {
-    extraModules: ["better-sqlite3"],
-  },
+  // rebuildConfig: {
+  //   extraModules: ["better-sqlite3"],
+  // },
   makers: [
     //new MakerSquirrel({}),
     new MakerDMG({

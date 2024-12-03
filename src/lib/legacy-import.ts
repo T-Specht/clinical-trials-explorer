@@ -176,6 +176,7 @@ export const AWLAYS_CREATE_CUSTOM_FILEDS: (typeof CustomFieldTable.$inferInsert)
       idName: "publicationUrl",
       label: "Publication URL",
       description: "URL to the publication",
+      autocompleteEnabled: false,
     },
     {
       dataType: "string",

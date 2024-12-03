@@ -31,6 +31,7 @@ import {
   TextInput,
   Textarea,
   Button,
+  Checkbox,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
@@ -137,7 +138,7 @@ export const CustomFieldsForm = (props: {
       <TextInput
         label="ID Name"
         {...form.register("idName")}
-        description="Be careful to update this value!"
+        // description="Be careful to update this value!"
       ></TextInput>
       <TextInput
         label="Label"
@@ -165,6 +166,20 @@ export const CustomFieldsForm = (props: {
             onChange={(e) => field.onChange(e)}
             description="Datatype of Custom Field"
           ></Select>
+        )}
+      ></Controller>
+
+      <Controller
+        control={form.control}
+        name="autocompleteEnabled"
+        render={({ field }) => (
+          <Checkbox
+            my="md"
+            label="Show autocomplete for field values?"
+            checked={field.value}
+            onChange={(e) => field.onChange(e.target.checked)}
+            description="This only works for string fields"
+          ></Checkbox>
         )}
       ></Controller>
 
