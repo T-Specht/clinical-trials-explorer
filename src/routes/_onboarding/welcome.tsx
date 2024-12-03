@@ -4,12 +4,15 @@ import { Link } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
 import { CloudDownload, FolderInput } from "lucide-react";
 
+//@ts-ignore - icon is not a module
+import icon from "@/assets/app-icon.png";
+
 export const Route = createFileRoute("/_onboarding/welcome")({
   component: () => (
     <Container className="space-y-4 max-w-4xl m-auto min-h-screen flex">
       <div className="m-auto">
         <div className="text-center">
-          <img src="app-icon.png" alt="" className="max-w-24 inline-block" />
+          <img src={icon} alt="" className="max-w-24 inline-block" />
           <Title>Welcome!</Title>
         </div>
 

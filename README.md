@@ -5,6 +5,8 @@ This repository includes the source code of version 2 of the clinical trials exp
 
 This new version is build to work with the new version of the clinicaltrials.gov API and has a number of new features and improvements. It is easier to use for beginner users and does _not_ require extensive computer and programming skills.
 
+[Demo video of Clinical Trials Explorer v2 [German]](https://youtu.be/0G0YikVD0JQ )
+
 You can find find [version 1 here](https://github.com/T-Specht/h1ra-repurpose/).
 
 ## Installation

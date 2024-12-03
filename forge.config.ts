@@ -7,6 +7,7 @@ import { MakerDMG } from "@electron-forge/maker-dmg";
 import { VitePlugin } from "@electron-forge/plugin-vite";
 import { FusesPlugin } from "@electron-forge/plugin-fuses";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
+import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-natives";
 
 import "dotenv/config";
 
@@ -15,14 +16,24 @@ const config: ForgeConfig = {
     asar: true,
     //extraResource: ["drizzle", "include"],
     extraResource: ["drizzle", "app-icon.png"],
+    appBundleId: "com.tim-specht.clinical-trials-explorer",
     icon: "./icons/icon",
-    // osxSign: {}
+    osxSign: {},
+    osxNotarize: {
+      appleId: process.env.APPLE_ID!,
+      appleIdPassword: process.env.APPLE_PASSWORD!,
+      teamId: process.env.APPLE_TEAM_ID!,
+    },
   },
-  rebuildConfig: {},
+  rebuildConfig: {
+    extraModules: ["better-sqlite3"],
+  },
   makers: [
     new MakerSquirrel({}),
-    new MakerDMG({} as any),
-    // new MakerZIP({}, ["darwin"]),
+    new MakerDMG({
+      icon: "./icons/icon.icns",
+    } as any),
+    new MakerZIP({}, ["darwin"]),
     // new MakerRpm({}),
     // new MakerDeb({}),
   ],
@@ -62,6 +73,9 @@ const config: ForgeConfig = {
         },
       ],
     }),
+    new AutoUnpackNativesPlugin({
+
+    }), // really important for better-sqlite3 because else it won't work with code signing
     // Fuses are used to enable/disable various Electron functionality
     // at package time, before code signing the application
     new FusesPlugin({
