@@ -33,7 +33,7 @@ const config: ForgeConfig = {
     new MakerDMG({
       icon: "./icons/icon.icns",
     } as any),
-    new MakerZIP({}, ["darwin"]),
+    new MakerZIP({}, ["darwin", "win32"]),
     // new MakerRpm({}),
     // new MakerDeb({}),
   ],
