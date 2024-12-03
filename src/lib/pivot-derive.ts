@@ -77,7 +77,7 @@ export const PIVOT_DERIVE_FUNCTIONS = [
     }),
     func: (d, jl, args) => {
       let { delimeter } = args;
-      return jsonLogic.apply(jl, d)?.split(delimeter)[0] ?? "";
+      return jsonLogic.apply(jl, d)?.split(delimeter)?.at(0) ?? "";
     },
   }),
   createPivotDeriveFunction({
@@ -107,7 +107,7 @@ export const PIVOT_DERIVE_FUNCTIONS = [
     func: (d, jl, args) => {
       const { subPath } = args;
 
-      let firstValue = jsonLogic.apply(jl, d)[0];
+      let firstValue = jsonLogic.apply(jl, d)?.at(0);
 
       if (subPath && subPath.trim() != "") {
         return jsonLogic.apply(

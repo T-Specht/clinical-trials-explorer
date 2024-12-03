@@ -1,7 +1,14 @@
 import { EntryTable } from "@/db/schema";
 import { SingleEntryReturnedByDBWrapper } from "@/lib/database-wrappers";
 import { findPublicationsWithCallbacks } from "@/lib/langchain";
-import { Button, CopyButton, Paper, ScrollArea, Skeleton } from "@mantine/core";
+import {
+  Button,
+  CopyButton,
+  Group,
+  Paper,
+  ScrollArea,
+  Skeleton,
+} from "@mantine/core";
 import { useState } from "react";
 
 const LoadingSkeleton = () => {
@@ -54,48 +61,64 @@ export const PublicationSearch = (props: {
 
   return (
     <div className="my-3">
-      <Button
-        loading={step != "initial" && step != "finished"}
-        disabled={(step != "initial" && step != "finished") || props.disabled}
-        onClick={async () => {
-          const isSecondRun = step == "finished";
-          setStep("started");
-          setAiMatches([]);
-          setQueries([]);
-          setRawReferences([]);
+      <Group>
+        <Button
+          loading={step != "initial" && step != "finished"}
+          disabled={(step != "initial" && step != "finished") || props.disabled}
+          onClick={async () => {
+            const isSecondRun = step == "finished";
+            setStep("started");
+            setAiMatches([]);
+            setQueries([]);
+            setRawReferences([]);
 
-          let res = await findPublicationsWithCallbacks(
-            JSON.stringify(input),
-            {
-              aiMatches(result) {
-                setAiMatches(result);
-                console.log("aiMatch", result);
+            let res = await findPublicationsWithCallbacks(
+              JSON.stringify(input),
+              {
+                aiMatches(result) {
+                  setAiMatches(result);
+                  console.log("aiMatch", result);
 
-                setStep("finished");
+                  setStep("finished");
+                },
+                queries(queries) {
+                  setQueries(queries);
+                  setStep("finished_queries");
+                  console.log("queries", queries);
+                },
+                rawReferences(references) {
+                  setRawReferences(references);
+                  console.log("rawReferences:");
+                  console.dir(references);
+                  setStep("finished_searchx");
+                },
               },
-              queries(queries) {
-                setQueries(queries);
-                setStep("finished_queries");
-                console.log("queries", queries);
-              },
-              rawReferences(references) {
-                setRawReferences(references);
-                console.log("rawReferences:");
-                console.dir(references);
-                setStep("finished_searchx");
-              },
-            },
-            isSecondRun ? ["internetarchivescholar", "arxiv"] : [] // Add google as a search engine in the second run to increase the chances of finding something
-          );
-          console.log(res);
-        }}
-      >
-        {step == "initial"
-          ? "Find Publications"
-          : step == "finished"
-            ? "Retry to find publications with additional search engines"
-            : "Finding Publications..."}
-      </Button>
+              isSecondRun ? ["internetarchivescholar", "arxiv"] : [] // Add google as a search engine in the second run to increase the chances of finding something
+            );
+            console.log(res);
+          }}
+        >
+          {step == "initial"
+            ? "Find Publications with AI"
+            : step == "finished"
+              ? "Retry to find publications with additional search engines"
+              : "Finding Publications..."}
+        </Button>
+
+        <a
+          href={`https://www.google.com/search?q=${encodeURIComponent(
+            `${props.entry.nctId} OR (${props.entry.title} ${
+              props.entry.rawJson?.contactsLocationsModule?.centralContacts?.at(
+                0
+              )?.name || ""
+            }) pubmed`
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button variant="light">Google for publication</Button>
+        </a>
+      </Group>
 
       {step == "initial" && (
         <div className="text-sm opacity-75">

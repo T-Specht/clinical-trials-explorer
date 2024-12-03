@@ -94,7 +94,7 @@ export const Route = createFileRoute("/_onboarding/legacy_import")({
                 {`docker compose exec db psql -U postgres -t -c "SELECT json_agg(row_to_json(e)) from \"Entry\" e;" > migration_export.json;`}{" "}
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-gray-200 dark:bg-dark-light rounded">
                   <CopyButton
-                    value={`docker compose exec db psql -U postgres -t -c "SELECT json_agg(row_to_json(e)) from \"Entry\" e;" > migration_export.json;`}
+                    value={`docker compose exec db psql -U postgres -t -c 'SELECT json_agg(row_to_json(e)) from \"Entry\" e;' > migration_export.json;`}
                     timeout={2000}
                   >
                     {({ copied, copy }) => (
