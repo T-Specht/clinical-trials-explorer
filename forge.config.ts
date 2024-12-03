@@ -31,7 +31,7 @@ const config: ForgeConfig = {
   makers: [
     //new MakerSquirrel({}),
     new MakerDMG({
-      icon: "./icons/icon.icns",
+      icon: "./icons/icon-dmg.icns",
     } as any),
     new MakerZIP({}, ["darwin", "win32"]),
     // new MakerRpm({}),
@@ -73,10 +73,9 @@ const config: ForgeConfig = {
         },
       ],
     }),
-    // new AutoUnpackNativesPlugin({
-    //   // really important for better-sqlite3 because else it won't work with code signing
-    //   // But only include if not dev mode
-    // }),
+    new AutoUnpackNativesPlugin({
+      // really important for better-sqlite3 because else it won't work with code signing
+    }),
     // Fuses are used to enable/disable various Electron functionality
     // at package time, before code signing the application
     new FusesPlugin({
