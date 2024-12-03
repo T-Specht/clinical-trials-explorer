@@ -17,6 +17,7 @@ import {
 } from "../../db/schema";
 import {
   getAllEntries,
+  getUniqueValuesForStringCustomFields,
   insertCustomFieldData,
   SingleEntryReturnedByDBWrapper,
   updateCustomFieldData,
@@ -76,6 +77,9 @@ const Entry = (props: {
   customFieldsData: (typeof CustomFieldEntryTable.$inferSelect)[];
   children?: React.ReactNode;
   className?: string;
+  stringCustomFieldsUniqueValues: Awaited<
+    ReturnType<typeof getUniqueValuesForStringCustomFields>
+  >;
 }) => {
   const [
     jumpPoint,
@@ -212,12 +216,17 @@ const Entry = (props: {
         });
       }
     );
+
+    // TODO: Replace instead of refetch
+    queryClient.invalidateQueries({
+      queryKey: ["custom_field_unique_values"],
+    });
   };
 
-  // Only save after 1 seconds of no changes
+  // Only save after 2 seconds of no changes
   const debouncedCustomFieldDataCurrent = useDebounce(
     customFieldDataCurrent,
-    1000
+    2000
   );
 
   useEffect(() => {
@@ -353,8 +362,16 @@ const Entry = (props: {
                   );
 
                   if (!f) return <div>Custom Field not found</div>;
+
+                  // Get Autocomplete values
+                  let acValues =
+                    props.stringCustomFieldsUniqueValues.find(
+                      (c) => c.id == f.id
+                    )?.uniqueValues || [];
+
                   return (
                     <EntryField
+                      autocomplete={acValues}
                       aiStatus={
                         aiProvider == "disabled" ||
                         !openAIKey ||
@@ -388,7 +405,9 @@ const Entry = (props: {
               ></PublicationSearch>
             </div>
 
-            <Title order={4} mt="md">Raw Data</Title>
+            <Title order={4} mt="md">
+              Raw Data
+            </Title>
             <div className="font-mono text-[12px] dark:invert">
               <JsonView
                 data={currentEntry.rawJson as any}

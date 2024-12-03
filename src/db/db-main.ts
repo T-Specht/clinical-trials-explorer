@@ -34,7 +34,9 @@ console.log(dbPath, migrationsFolder);
 
 class MyLogWriter implements LogWriter {
   write(message: string) {
-    // console.log(`### drizzle log ##\n${message}\n`);
+    if (IS_DEV) {
+      console.log(`### drizzle log ##\n${message}\n`);
+    }
   }
 }
 
@@ -67,13 +69,18 @@ export const execute = async (
     throw new Error("No database connected.");
   }
 
-  //console.log(sqlstr, params);
+  if(IS_DEV) {
+    console.log(sqlstr, params);
+    console.log('\n\n\n')
+  } 
 
   const result = sqlite.prepare(sqlstr);
   //@ts-expect-error asdhkjashdkj
   const ret = result[method](...params);
 
-  // console.log(ret);
+
+
+  //console.log(ret);
 
   return toDrizzleResult(ret);
 };

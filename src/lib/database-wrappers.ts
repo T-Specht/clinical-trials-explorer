@@ -181,6 +181,28 @@ export const getZustandItem = async (name: string) => {
   return data?.data;
 };
 
+export const getUniqueValuesForStringCustomFields = async () => {
+  return await database
+    .select({
+      fieldName: CustomFieldTable.idName,
+      id: CustomFieldTable.id,
+      uniqueValues:
+        sql`json_group_array(DISTINCT ${CustomFieldEntryTable.value})`.mapWith({
+          mapFromDriverValue(value) {
+            let arr: string[] = JSON.parse(value);
+            return arr.filter((e) => e !== null && e.trim() !== "");
+          },
+        }),
+    })
+    .from(CustomFieldTable)
+    .where(eq(CustomFieldTable.dataType, "string"))
+    .leftJoin(
+      CustomFieldEntryTable,
+      eq(CustomFieldEntryTable.customFieldId, CustomFieldTable.id)
+    )
+    .groupBy(CustomFieldTable.id);
+};
+
 export const getCustomFields = async () => {
   return database.select().from(CustomFieldTable);
 };

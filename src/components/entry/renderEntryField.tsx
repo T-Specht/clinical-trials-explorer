@@ -3,7 +3,7 @@ import { UIFieldType } from "@/lib/fields";
 // import { Input } from "../ui/input";
 // import { Checkbox } from "../ui/checkbox";
 import { BotIcon, Brain, LoaderCircle, RefreshCcwIcon } from "lucide-react";
-import { Checkbox, NumberInput, TextInput } from "@mantine/core";
+import { Autocomplete, Checkbox, NumberInput, TextInput } from "@mantine/core";
 
 const EntryField = (props: {
   customFieldDefinition: typeof CustomFieldTable.$inferSelect;
@@ -17,6 +17,7 @@ const EntryField = (props: {
   aiStatus: "loading" | "disabled" | "data";
   onChange: (val: any) => void;
   value: any;
+  autocomplete?: string[];
 }) => {
   const { onChange, value, customFieldDefinition: customField } = props;
 
@@ -43,10 +44,11 @@ const EntryField = (props: {
           case "string":
             return (
               <div>
-                <TextInput
+                <Autocomplete
                   label={f.label}
                   value={value || ""}
-                  onChange={(e) => onChange(e.target.value)}
+                  onChange={(val) => onChange(val)}
+                  data={props.autocomplete || []}
                   disabled={f.isDisabled}
                 />
               </div>

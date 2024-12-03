@@ -7,6 +7,7 @@ import {
   getCustomFields,
   getEntry,
   getListOfEntryIds,
+  getUniqueValuesForStringCustomFields,
 } from "@/lib/database-wrappers";
 import { clamp } from "@/lib/utils";
 import { useSettingsStore } from "@/lib/zustand";
@@ -26,7 +27,7 @@ const Component = () => {
   // let { e, nextId, prevId, customFields, allEntries } = Route.useLoaderData();
   const filter = useSettingsStore((s) => s.filter);
 
-  const [entries, customFields] = useQueries({
+  const [entries, customFields, stringCustomFieldsUniqueValues] = useQueries({
     queries: [
       {
         queryKey: ["filtered_entries", filter],
@@ -36,6 +37,10 @@ const Component = () => {
       {
         queryKey: ["custom_fields"],
         queryFn: () => getCustomFields(),
+      },
+      {
+        queryKey: ["custom_field_unique_values"],
+        queryFn: () => getUniqueValuesForStringCustomFields(),
       },
     ],
   });
@@ -84,13 +89,16 @@ const Component = () => {
         onPrev={prev}
         setJumpPoint={setJumpPoint}
       ></EntryMenu>
-      {!!current && !!customFields.data ? (
+      {!!current &&
+      !!customFields.data &&
+      !!stringCustomFieldsUniqueValues.data ? (
         <Entry
           className="flex-1 h-0"
           entry={current}
           customFieldsData={current.customFieldsData}
           customFields={customFields.data}
           key={current.id}
+          stringCustomFieldsUniqueValues={stringCustomFieldsUniqueValues.data}
         ></Entry>
       ) : (
         <div>Loading</div>
