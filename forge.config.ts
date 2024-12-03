@@ -25,9 +25,9 @@ const config: ForgeConfig = {
       teamId: process.env.APPLE_TEAM_ID!,
     },
   },
-  // rebuildConfig: {
-  //   extraModules: ["better-sqlite3"],
-  // },
+  rebuildConfig: {
+    extraModules: ["better-sqlite3"],
+  },
   makers: [
     //new MakerSquirrel({}),
     new MakerDMG({
@@ -73,9 +73,10 @@ const config: ForgeConfig = {
         },
       ],
     }),
-    new AutoUnpackNativesPlugin({
-      // really important for better-sqlite3 because else it won't work with code signing
-    }),
+    {
+      name: "@electron-forge/plugin-auto-unpack-natives",
+      config: {},
+    },
     // Fuses are used to enable/disable various Electron functionality
     // at package time, before code signing the application
     new FusesPlugin({
