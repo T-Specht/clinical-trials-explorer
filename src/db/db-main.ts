@@ -88,10 +88,15 @@ export const runMigrate = async () => {
     throw new Error("No database connected.");
   }
 
-  fs.mkdirSync(DEFAULT_BACKUP_PATH, { recursive: true });
-  await sqlite?.backup(join(DEFAULT_BACKUP_PATH, `backup-${Date.now()}.db`));
+  let dbNameWithoutExt = path.parse(dbPath || '').name;
 
-  db.run(sql`PRAGMA foreign_keys=OFF;`)
+  fs.mkdirSync(DEFAULT_BACKUP_PATH, { recursive: true });
+  await sqlite?.backup(
+    join(DEFAULT_BACKUP_PATH, `backup-${dbNameWithoutExt}-${Date.now()}.db`)
+  );
+
+  // https://github.com/drizzle-team/drizzle-orm/issues/1813#issuecomment-2460509578
+  db.run(sql`PRAGMA foreign_keys=OFF;`);
   try {
     migrate(db, {
       migrationsFolder: migrationsFolder,
@@ -99,7 +104,7 @@ export const runMigrate = async () => {
   } catch (error) {
     dialog.showErrorBox("Migration Error", (error as any).message);
   } finally {
-    db.run(sql`PRAGMA foreign_keys=ON;`)
+    db.run(sql`PRAGMA foreign_keys=ON;`);
   }
 };
 
