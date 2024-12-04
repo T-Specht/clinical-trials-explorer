@@ -29,7 +29,7 @@ const config: ForgeConfig = {
     extraModules: ["better-sqlite3"],
   },
   makers: [
-    //new MakerSquirrel({}),
+    new MakerSquirrel({}),
     new MakerDMG({
       icon: "./icons/icon-dmg.icns",
     } as any),

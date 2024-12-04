@@ -6,7 +6,9 @@ import {
 import { getKeys } from "@/lib/utils";
 import { useSettingsStore } from "@/lib/zustand";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { motion, AnimatePresence } from "motion/react";
 import {
+  Alert,
   Autocomplete,
   Button,
   Group,
@@ -19,6 +21,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import e from "express";
+import { LightbulbIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -79,6 +82,29 @@ export const PivotDerivedRuleForm = (props: {
 
   return (
     <form className="space-y-3">
+      {/* <AnimatePresence>
+        {props.rule && form.formState.isDirty && (
+          <motion.div
+            key="info"
+            exit={{ height: 0, opacity: 0 }}
+            initial={{ height: 0, opacity: 0 }}
+            whileInView={{ height: "auto", opacity: 1 }}
+            layout
+          >
+            <Alert
+              my="md"
+              variant="light"
+              color="blue"
+              title="Information"
+              icon={<LightbulbIcon></LightbulbIcon>}
+              p="xs"
+              className="!text-sm"
+            >
+              Click on the "Update" button to save changes to this rule.
+            </Alert>
+          </motion.div>
+        )}
+      </AnimatePresence> */}
       <TextInput
         {...form.register("propertyName")}
         required
@@ -194,7 +220,7 @@ export const PivotDerivedRuleForm = (props: {
         <Group>
           <Button
             size="xs"
-            variant="default"
+            disabled={!form.formState.isDirty}
             onClick={form.handleSubmit((data) => {
               setPivotDeriveRules([
                 ...pivotDeriveRules.map((r) => {
@@ -264,6 +290,7 @@ export const PivotDerivedRuleForm = (props: {
       ) : (
         <Button
           size="xs"
+          disabled={!form.formState.isDirty}
           onClick={form.handleSubmit((data) => {
             setPivotDeriveRules([data, ...pivotDeriveRules]);
             notifications.show({
