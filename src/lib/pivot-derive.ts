@@ -153,7 +153,8 @@ export const zodPivotDeriveRuleBaseSchema = z.object({
   propertyName: z.string(),
   func: z.enum(FUNCTION_NAMES),
   args: z.any(),
-  jsonLogic: z.custom<jsonLogic.RulesLogic<jsonLogic.AdditionalOperation>>(),
+  //jsonLogic: z.custom<jsonLogic.RulesLogic<jsonLogic.AdditionalOperation>>(),
+  jsonLogic: z.custom<any>(), // above causes error with hook form
   displayName: z.string().optional(),
   description: z.string().optional(),
 });

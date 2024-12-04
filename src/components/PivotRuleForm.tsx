@@ -5,6 +5,7 @@ import {
 } from "@/lib/pivot-derive";
 import { getKeys } from "@/lib/utils";
 import { useSettingsStore } from "@/lib/zustand";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Autocomplete,
   Button,
@@ -18,7 +19,9 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import e from "express";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { z } from "zod";
 import { useShallow } from "zustand/react/shallow";
 
 export function getAllJsonLogicPaths(obj: any, parentPath = ""): string[] {
@@ -51,173 +54,163 @@ export const PivotDerivedRuleForm = (props: {
     useShallow((s) => [s.pivotDeriveRules, s.setPivotDeriveRules])
   );
 
-  const [propertyName, setPropertyName] = useState(
-    props.rule?.propertyName || "new_property"
-  );
-  const [fnName, setFnName] = useState<string | null>(props.rule?.func || null);
-  const [cArgs, setCArgs] = useState<{ [key: string]: string }[]>(
-    props.rule?.args || {}
-  );
+  const form = useForm<PivotDeriveRule>({
+    defaultValues: {
+      args: props.rule?.args || {},
+      description: props.rule?.description || "",
+      displayName: props.rule?.displayName || "",
+      func: props.rule?.func || "get",
+      jsonLogic: props.rule?.jsonLogic || { var: "path.to.value" },
+      propertyName: props.rule?.propertyName || "new_property",
+    },
+    resolver: zodResolver(zodPivotDeriveRuleBaseSchema),
+  });
 
-  const [description, setDescription] = useState(props.rule?.description);
-  const [displayName, setDisplayName] = useState(props.rule?.displayName);
+  // If this value is true, then do not change field via form! Field will become disabled because json logic is set to more advanced value.
+  const HAS_COMPLEX_JSON_LOGIC =
+    !!props.rule && !!props.rule.jsonLogic && !props.rule.jsonLogic.var;
 
-  // If this value is null, then do not change it! Field will become disabled because json logic is set to more advanced value.
-  const [jsonLogicPathVar, setJsonLogicPathVar] = useState<string | null>(
-    () => {
-      if (!props.rule) return "path.to.value";
-      //@ts-ignore
-      if (!!props.rule.jsonLogic?.var) return props.rule.jsonLogic.var;
-      else return null;
-    }
-  );
+  const fnName = form.watch("func");
 
   let currentFunction = PIVOT_DERIVE_FUNCTIONS.find((fn) => fn.name === fnName);
   let hasArguments = currentFunction?.args
     ? getKeys(currentFunction?.args.shape).length > 0
     : false;
 
-  const generateRule = () => {
-    return {
-      propertyName,
-      func: fnName as any,
-      args: cArgs,
-      description,
-      displayName,
-      jsonLogic:
-        jsonLogicPathVar == null
-          ? props.rule?.jsonLogic! // Keep "complex json logic" if it was set and detected
-          : {
-              var: jsonLogicPathVar,
-            },
-    } satisfies PivotDeriveRule;
-  };
-
   return (
     <form className="space-y-3">
       <TextInput
-        value={propertyName}
+        {...form.register("propertyName")}
         required
         label="Property Name"
         description="The name of the property to derive"
-        onChange={(e) => setPropertyName(e.target.value)}
       ></TextInput>
       <TextInput
-        value={displayName || ""}
+        {...form.register("displayName")}
         label="Display Name"
         description="The name of the property to display in the pivot table"
-        onChange={(e) => setDisplayName(e.target.value)}
       ></TextInput>
       <TextInput
-        value={description || ""}
+        {...form.register("description")}
         label="Description"
         description="A description of the property"
-        onChange={(e) => setDescription(e.target.value)}
       ></TextInput>
-
-      <Select
-        value={fnName}
-        description={
-          PIVOT_DERIVE_FUNCTIONS.find((p) => p.name === fnName)?.description
-        }
-        data={PIVOT_DERIVE_FUNCTIONS.map((fn) => ({
-          value: fn.name,
-          label: fn.name,
-        }))}
-        renderOption={(props) => {
-          let description = PIVOT_DERIVE_FUNCTIONS.find(
-            (p) => p.name === props.option.value
-          )?.description;
+      <Controller
+        control={form.control}
+        name="func"
+        render={({ field }) => {
           return (
-            <Group flex="1" gap="xs">
-              {props.option.label}
-              {description && <small>{description}</small>}
-            </Group>
+            <Select
+              value={field.value}
+              description={
+                PIVOT_DERIVE_FUNCTIONS.find((p) => p.name === fnName)
+                  ?.description
+              }
+              data={PIVOT_DERIVE_FUNCTIONS.map((fn) => ({
+                value: fn.name,
+                label: fn.name,
+              }))}
+              renderOption={(props) => {
+                let description = PIVOT_DERIVE_FUNCTIONS.find(
+                  (p) => p.name === props.option.value
+                )?.description;
+                return (
+                  <Group flex="1" gap="xs">
+                    {props.option.label}
+                    {description && <small>{description}</small>}
+                  </Group>
+                );
+              }}
+              onChange={(e) => field.onChange(e)}
+              placeholder="Select function"
+              label="Derivation Function"
+              required
+            ></Select>
           );
         }}
-        onChange={(e) => setFnName(e)}
-        placeholder="Select function"
-        label="Derivation Function"
-        required
-      ></Select>
+      ></Controller>
+
       {hasArguments && (
         <Paper shadow="xs" p="md">
           <Title order={5}>Arguments</Title>
 
-          {currentFunction?.args &&
-            getKeys(currentFunction?.args.shape).map((arg) => {
-              return (
-                <TextInput
-                  key={arg}
-                  value={cArgs[arg] as any}
-                  onChange={(e) => {
-                    // @ts-ignore
-                    setCArgs({ ...cArgs, [arg]: e.target.value });
-                  }}
-                  label={arg}
-                  description={
-                    (currentFunction?.args.shape[arg] as any).description || ""
-                  }
-                ></TextInput>
-              );
-            })}
+          {currentFunction?.args && (
+            <Controller
+              control={form.control}
+              name="args"
+              render={({ field }) => {
+                return (
+                  <>
+                    {getKeys(currentFunction?.args.shape).map((arg) => {
+                      return (
+                        <TextInput
+                          key={arg}
+                          value={field.value[arg]}
+                          onChange={(e) => {
+                            field.onChange({
+                              ...field.value,
+                              [arg]: e.target.value,
+                            });
+                          }}
+                          label={arg}
+                          description={
+                            (currentFunction?.args.shape[arg] as any)
+                              .description || ""
+                          }
+                        ></TextInput>
+                      );
+                    })}
+                  </>
+                );
+              }}
+            ></Controller>
+          )}
         </Paper>
       )}
-      {/* <JsonInput
-        label="JSONLogic Path"
-        description="Path to access data"
-        autosize
-        formatOnBlur
-        value={jsonLogic}
-        onChange={(e) => setJsonLogic(e)}
-      ></JsonInput> */}
 
-      <Autocomplete
-        disabled={jsonLogicPathVar == null}
-        required
-        label="Path to access data"
-        value={!!jsonLogicPathVar ? jsonLogicPathVar : ""}
-        onChange={(e) => setJsonLogicPathVar(e)}
-        data={props.autoCompletePaths || []}
-        description={
-          jsonLogicPathVar == null
-            ? 'This field is disabled because you have selected a more advanced value for "jsonLogic"'
-            : "This field's autocomplete includes possible paths to access data in the JSON object of a single entry. Start typing to search. You may deviate from the suggestions."
-        }
-      />
+      <Controller
+        control={form.control}
+        name="jsonLogic"
+        render={({ field, fieldState }) => {
+          return (
+            <Autocomplete
+              disabled={HAS_COMPLEX_JSON_LOGIC}
+              required
+              label="Path to access data"
+              value={!!field.value ? field.value.var : ""}
+              onChange={(e) => field.onChange({ var: e })}
+              data={props.autoCompletePaths || []}
+              description={
+                HAS_COMPLEX_JSON_LOGIC
+                  ? 'This field is disabled because you have selected a more advanced value for "jsonLogic"'
+                  : "This field's autocomplete includes possible paths to access data in the JSON object of a single entry. Start typing to search. You may deviate from the suggestions."
+              }
+            />
+          );
+        }}
+      ></Controller>
 
       {props.rule ? (
         <Group>
           <Button
             size="xs"
             variant="default"
-            onClick={() => {
-              let newRuleSet = generateRule();
-              let parse = zodPivotDeriveRuleBaseSchema.safeParse(newRuleSet);
-              if (!parse.success) {
-                notifications.show({
-                  title: "Error",
-                  message: parse.error.message,
-                  color: "red",
-                });
-                return;
-              } else {
-                setPivotDeriveRules([
-                  ...pivotDeriveRules.map((r) => {
-                    if (r.propertyName === props.rule?.propertyName) {
-                      return newRuleSet;
-                    } else {
-                      return r;
-                    }
-                  }),
-                ]);
-                notifications.show({
-                  title: "Success",
-                  message: "Rule updated",
-                  color: "green",
-                });
-              }
-            }}
+            onClick={form.handleSubmit((data) => {
+              setPivotDeriveRules([
+                ...pivotDeriveRules.map((r) => {
+                  if (r.propertyName === props.rule?.propertyName) {
+                    return data;
+                  } else {
+                    return r;
+                  }
+                }),
+              ]);
+              notifications.show({
+                title: "Success",
+                message: "Rule updated",
+                color: "green",
+              });
+            })}
           >
             Update
           </Button>
@@ -271,25 +264,15 @@ export const PivotDerivedRuleForm = (props: {
       ) : (
         <Button
           size="xs"
-          onClick={() => {
-            let newRuleSet = generateRule();
-            let parse = zodPivotDeriveRuleBaseSchema.safeParse(newRuleSet);
-            if (!parse.success) {
-              notifications.show({
-                title: "Error",
-                message: parse.error.message,
-                color: "red",
-              });
-              return;
-            } else {
-              setPivotDeriveRules([newRuleSet, ...pivotDeriveRules]);
-              notifications.show({
-                title: "Success",
-                message: "Rule added",
-                color: "green",
-              });
-            }
-          }}
+          onClick={form.handleSubmit((data) => {
+            setPivotDeriveRules([data, ...pivotDeriveRules]);
+            notifications.show({
+              title: "Success",
+              message: "Rule added",
+              color: "green",
+            });
+            form.reset();
+          })}
         >
           Create
         </Button>

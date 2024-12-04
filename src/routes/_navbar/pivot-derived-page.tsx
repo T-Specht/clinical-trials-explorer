@@ -37,18 +37,21 @@ const Page = () => {
 
       let allPaths: string[] = [];
 
-      // Sample from first 10 enrties
-      for (let entry of res.slice(0, 10)) {
-        let paths = getAllJsonLogicPaths(res[0]);
+      // Sample from first 15 enrties
+      for (let entry of res.slice(0, 15)) {
+        let paths = getAllJsonLogicPaths(entry);
         allPaths.push(...paths);
       }
 
-      let uniquePaths = [...new Set(allPaths)];
-      console.log("Generated Paths", uniquePaths);
+      // Do not include derived path as they cannot be used in json logic
+      let uniquePaths = [...new Set(allPaths)].filter(
+        (p) => !p.startsWith("derived_")
+      );
+      //console.log("Generated Paths", uniquePaths);
 
       return uniquePaths;
     },
-    staleTime: Infinity,
+    staleTime: 30 * 1000,
   });
 
   const [pivotDeriveRules, setPivotDeriveRules] = useSettingsStore(
@@ -149,7 +152,7 @@ const Page = () => {
               </Button>
             </Link>
           </div>
-          
+
           <Title order={3}>Help</Title>
 
           <p>
