@@ -59,8 +59,8 @@ export const PivotDerivedRuleForm = (props: {
     props.rule?.args || {}
   );
 
-  const [description, setDescription] = useState<string | undefined>();
-  const [displayName, setDisplayName] = useState<string | undefined>();
+  const [description, setDescription] = useState(props.rule?.description);
+  const [displayName, setDisplayName] = useState(props.rule?.displayName);
 
   // If this value is null, then do not change it! Field will become disabled because json logic is set to more advanced value.
   const [jsonLogicPathVar, setJsonLogicPathVar] = useState<string | null>(
