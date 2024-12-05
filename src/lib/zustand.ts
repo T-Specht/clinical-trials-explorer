@@ -48,7 +48,7 @@ const storage: StateStorage = {
   },
 };
 
-export type AIProviders = "openai" | "anthropic" | "disabled";
+export type AIProviders = "openai" | "anthropic" | "ollama" | "disabled";
 
 type SettingsStore = {
   jumpPoint: string;

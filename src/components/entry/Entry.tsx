@@ -127,7 +127,7 @@ const Entry = (props: {
   const queryClient = useQueryClient();
 
   const aiQuery = useQuery({
-    queryKey: ["ai_meta", currentEntry.id, currentEntry.createdAt],
+    queryKey: ["ai_meta", currentEntry.id, currentEntry.createdAt, aiProvider],
     enabled: !!openAIKey && aiProvider != "disabled",
     queryFn: () => {
       const schema = buildAiReturnSchemaForCustomFields(props.customFields);

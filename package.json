@@ -33,6 +33,7 @@
     "@electron-forge/plugin-vite": "~7.4.0",
     "@electron-forge/publisher-github": "~7.4.0",
     "@electron/fuses": "^1.8.0",
+    "@electron/packager": "^18.3.6",
     "@tailwindcss/typography": "^0.5.15",
     "@tanstack/router-devtools": "^1.85.4",
     "@tanstack/router-plugin": "^1.85.3",
@@ -55,8 +56,7 @@
     "tailwindcss": "^3.4.10",
     "ts-node": "^10.0.0",
     "typescript": "^5.5.4",
-    "vite": "^5.0.12",
-    "@electron/packager": "^18.3.6"
+    "vite": "^5.0.12"
   },
   "keywords": [],
   "author": {
@@ -69,6 +69,7 @@
     "@hookform/resolvers": "^3.9.0",
     "@langchain/anthropic": "^0.3.8",
     "@langchain/core": "^0.3.19",
+    "@langchain/ollama": "^0.1.2",
     "@lexical/react": "^0.17.1",
     "@mantine/carousel": "^7.13.5",
     "@mantine/charts": "^7.13.5",

@@ -7,6 +7,7 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 import { useSettingsStore } from "./zustand";
 import { searxng_api_search } from "./searxng_api";
 import { ChatAnthropic } from "@langchain/anthropic";
+import { ChatOllama } from "@langchain/ollama";
 
 // import { ChatAnthropicTools } from "@langchain/anthropic/experimental";
 
@@ -15,6 +16,7 @@ import { ChatAnthropic } from "@langchain/anthropic";
 export const DEFAULT_AI_MODELS = {
   openai: "gpt-4o-mini",
   anthropic: "claude-3-5-haiku-latest",
+  ollama: "llama3.1",
   disabled: "",
 };
 
@@ -43,6 +45,14 @@ const getModel = (temp = 0) => {
     });
   }
 
+  if (aiProvider === "ollama") {
+    return new ChatOllama({
+      model: model,
+      temperature: temp,
+      maxRetries: 5,
+    });
+  }
+
   return null;
 
   //return new ChatAnthropic({});
@@ -55,14 +65,15 @@ export async function generateAISearchQueries(input: string) {
     throw new Error("No model selected");
   }
 
+  const n = 6;
   const queryGenerationSchema = z.object({
-    queries: z.array(z.string()).describe("search queries"),
+    queries: z.array(z.string()).length(n).min(n).max(n).describe("search queries"),
   });
 
   const prompt = ChatPromptTemplate.fromMessages([
     [
       "system",
-      "Given the input of data from a clinical study, generate 6 search queries that are highly likely to find the exact published paper if one should exist.",
+      `Given the input of data from a clinical study, generate exactly ${n} search queries that are highly likely to find via internet search engines (you will use searxng as a meta search engine for scientific literature) the exact published paper if one should exist. If the study provides references, check if they are relevant.`,
     ],
     ["user", "{input}"],
   ]);
@@ -98,10 +109,18 @@ async function extractPapers(input: string, references: string) {
               "the tool with which you found the source, e.g. pubmed or semantic_scholar"
             ),
           confidence: z
-            .number()
-            .min(0)
-            .max(100)
+            .enum(['high', 'medium', 'low'])
             .describe("confidence that this paper matches the clinical study"),
+          pro: z
+            .string()
+            .describe(
+              "considerations that this is the right paper for the given study = pro arguments"
+            ),
+          con: z
+            .string()
+            .describe(
+              "considerations that this is the wrong paper for the given study = con arguments"
+            ),
         })
       )
       .describe(
@@ -112,7 +131,9 @@ async function extractPapers(input: string, references: string) {
   const prompt = ChatPromptTemplate.fromMessages([
     [
       "system",
-      "Given the input of data from a clinical study and potential references for a corresponding publication to the study, find the paper that matches the study data. If you cannot find a paper that matches the study data, return an empty array.",
+      `Given the input of data from a clinical study and potential references for a corresponding publication to the study, find the paper that matches the study data. Important: If you cannot find a paper that matches the study data, return an empty array. Do not generate fake papers.
+      Also take into consideration the start/end dates of the study and the publication date of the paper when matching.
+      `,
     ],
     [
       "user",
@@ -155,24 +176,6 @@ export async function generateMetaData<T extends z.ZodRawShape>(
     [
       "system",
       `You are given information about a clinical study in JSON format. Extract the information required in the output formatter function from the study data.
-      
-      Possible roles, consider in THIS order please:
-        - "not included": drug_names are not included in the study (sometimes names of people also matched synonyms of search terms).
-        - "combination": drug_name is combined with some other form of treatment, drug or medication.
-        - "comparison": drug_name is compared to some other drugs or forms of treatment which are not placebo. If it is only compared to placebo, consider role "main"
-        - "premedication": drug_name is used as a premedication and not evaluated further.
-        - "rescue medication": drug_name is used as a rescue medication.
-        - "minimal": drug_name has a very minimal role in the study. Use this if there are a lot of other drugs in the study and there is no clear focus on the drug_name
-        - "main": drug_name is the main focus of the study and there almost no other medication or drugs in the study. Important: Before assiginig this role, consider if comparison or combination may be more descriptive options.
-        - "control": drug_name is a control drug and not an aspect of focus in the study.
-      
-        Please also use combination or comparison if it is combination or comparison of multiple antihistamines.
-      
-        For usecases, you may consider the follwing if you find them fitting specifically: Do not change them, if you choose them
-        - "taste/form/preference"
-        - "bioequivalence"
-        - "bioavailability"
-        - "pharmacokinetics"
     `,
     ],
     ["user", `{input}`],
@@ -185,6 +188,9 @@ export async function generateMetaData<T extends z.ZodRawShape>(
   const result = await chain.invoke({
     input: input,
   });
+
+  //console.log('AI_RESULT_LOG', result);
+
   return result;
 }
 
@@ -223,14 +229,7 @@ export async function findPublicationsWithCallbacks(
       }[]
     ) => any;
     aiMatches: (
-      result: {
-        url: string;
-        title: string;
-        authors: string;
-        year: string;
-        source: string;
-        confidence: number;
-      }[]
+      result: Awaited<ReturnType<typeof extractPapers>>['result']
     ) => any;
   },
   addEngines: string[] = []

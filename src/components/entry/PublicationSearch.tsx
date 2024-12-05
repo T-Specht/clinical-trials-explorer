@@ -9,7 +9,8 @@ import {
   ScrollArea,
   Skeleton,
 } from "@mantine/core";
-import { useState } from "react";
+import { useLocalStorage, useSessionStorage } from "@mantine/hooks";
+import { useEffect, useState } from "react";
 
 const LoadingSkeleton = () => {
   return (
@@ -32,6 +33,7 @@ export const PublicationSearch = (props: {
     description: props.entry.rawJson?.descriptionModule,
     intervention: props.entry.rawJson?.armsInterventionsModule,
     references: props.entry.rawJson?.referencesModule,
+    status: props.entry.rawJson?.statusModule,
   };
 
   const [step, setStep] = useState<
@@ -39,16 +41,21 @@ export const PublicationSearch = (props: {
   >("initial");
 
   const [queries, setQueries] = useState<string[]>([]);
-  const [aiMatches, setAiMatches] = useState<
+  const [aiMatches, setAiMatches] = useLocalStorage<
     {
       url: string;
       title: string;
       authors: string;
       year: string;
       source: string;
-      confidence: number;
+      confidence: string;
+      pro: string;
+      con: string;
     }[]
-  >([]);
+  >({
+    key: `ai_publications_${props.entry.nctId}`, // TODO cache in DB?
+    defaultValue: [],
+  });
   const [rawReferences, setRawReferences] = useState<
     {
       content: string;
@@ -58,6 +65,12 @@ export const PublicationSearch = (props: {
       engine: string;
     }[]
   >([]);
+
+  useEffect(() => {
+    if (aiMatches.length > 0) {
+      setStep("finished");
+    }
+  }, [aiMatches]);
 
   return (
     <div className="my-3">
@@ -225,7 +238,8 @@ export const PublicationSearch = (props: {
                           props.onLinkClick && props.onLinkClick(r.url);
                         }}
                       >
-                        Link: {r.source} {r.year}, Confidence: {r.confidence}%{" "}
+                        Link: {r.source} {r.year}, Confidence of match{" "}
+                        {r.confidence}
                       </div>
                       <CopyButton value={r.url}>
                         {({ copied, copy }) => (
@@ -244,7 +258,18 @@ export const PublicationSearch = (props: {
                           Open in Browser
                         </Button>
                       </a>
+
                       {/* </a> */}
+                    </div>
+                    <div className="text-sm">
+                      <div>
+                        <b className="text-green">Pro: </b>
+                        {r.pro}
+                      </div>
+                      <div>
+                        <b className="text-red">Con: </b>
+                        {r.con}
+                      </div>
                     </div>
                   </Paper>
                 ))}

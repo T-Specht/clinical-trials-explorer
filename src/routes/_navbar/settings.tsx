@@ -108,6 +108,10 @@ export const Route = createFileRoute("/_navbar/settings")({
                 label: "Anthropic",
               },
               {
+                value: "ollama",
+                label: "Ollama (not recommended)",
+              },
+              {
                 value: "disabled",
                 label: "Disable AI Features",
               },
@@ -206,7 +210,11 @@ export const Route = createFileRoute("/_navbar/settings")({
         <Group>
           <Button
             onClick={async () => {
-              if (confirm("Are you sure you want to export all data? This may take a few seconds.")) {
+              if (
+                confirm(
+                  "Are you sure you want to export all data? This may take a few seconds."
+                )
+              ) {
                 const allData = (await getAllEntriesWithFlatCustomFields()).map(
                   (e) => {
                     let p = omit(

@@ -99,7 +99,7 @@ const EntryField = (props: {
                   }}
                   className="cursor-pointer"
                 >
-                  {props.aiData.value.toString()}
+                  {String(props.aiData.value)}
                 </code>
                 : {props.aiData.explanation}
               </div>
