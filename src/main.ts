@@ -1,18 +1,15 @@
-import {
-  app,
-  BrowserWindow,
-  dialog,
-  ipcMain,
-  Menu, shell
-} from "electron";
+import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from "electron";
 import path from "path";
 import {
   DEFAULT_DB_PATH,
   execute,
   getCurrentDbPath,
-  openDatabase
+  openDatabase,
 } from "./db/db-main";
 import { menu } from "./main_process/app_menu";
+
+const { updateElectronApp } = require("update-electron-app");
+updateElectronApp();
 
 const isMac = process.platform === "darwin";
 
@@ -23,10 +20,9 @@ if (require("electron-squirrel-startup")) {
   app.quit();
 }
 
-
 const IS_DEV = process.env.NODE_ENV === "development";
 
-const basePath = IS_DEV ? '.' : process.resourcesPath;
+const basePath = IS_DEV ? "." : process.resourcesPath;
 
 //const jupyter = startJupyter();
 const ICON_PATH = path.join(basePath, "app-icon.png");
@@ -96,7 +92,6 @@ const createWindow = async () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on("ready", async () => {
-
   // dialog.showMessageBoxSync({
   //   message: basePath,
   // })

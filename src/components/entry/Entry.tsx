@@ -126,10 +126,11 @@ const Entry = (props: {
 
   const updateNotes = useDebouncedCallback(async (markdown: string) => {
     await updateEntryFields(props.entry.id, { notes: markdown });
-    notifications.show({
-      title: "Saved changes",
-      message: "Notes",
-    });
+    // notifications.show({
+    //   title: "Saved changes",
+    //   message: "Notes",
+    // });
+    setLastSavedFields(["Notes"]);
 
     // Update in Cache
     updateCachedEntry({

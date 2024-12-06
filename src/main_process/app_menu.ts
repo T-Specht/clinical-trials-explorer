@@ -214,10 +214,17 @@ const template: MenuItemConstructorOptions[] = [
     role: "help",
     submenu: [
       {
-        label: "Learn More",
+        label: "View project on GitHub",
         click: async () => {
           const { shell } = require("electron");
-          await shell.openExternal("https://electronjs.org");
+          await shell.openExternal("https://github.com/T-Specht/clinical-trials-explorer");
+        },
+      },
+      {
+        label: "Open original paper",
+        click: async () => {
+          const { shell } = require("electron");
+          await shell.openExternal("https://doi.org/10.1007/s00210-023-02796-9");
         },
       },
     ],
