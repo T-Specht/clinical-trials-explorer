@@ -1,6 +1,10 @@
 import { EntryTable } from "@/db/schema";
 import { SingleEntryReturnedByDBWrapper } from "@/lib/database-wrappers";
-import { findPublicationsWithCallbacks } from "@/lib/langchain";
+import {
+  AiPublicationMatchType,
+  findPublicationsWithCallbacks,
+} from "@/lib/langchain";
+import { useAiCacheStore } from "@/lib/zustand";
 import {
   Button,
   CopyButton,
@@ -11,6 +15,7 @@ import {
 } from "@mantine/core";
 import { useLocalStorage, useSessionStorage } from "@mantine/hooks";
 import { useEffect, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 
 const LoadingSkeleton = () => {
   return (
@@ -40,22 +45,19 @@ export const PublicationSearch = (props: {
     "initial" | "started" | "finished_queries" | "finished_searchx" | "finished"
   >("initial");
 
+  const [getPublicationSearchCacheForNct, setPublicationSearchCacheForNct] =
+    useAiCacheStore(
+      useShallow((s) => [
+        s.getPublicationSearchCacheForNct,
+        s.setPublicationSearchCacheForNct,
+      ])
+    );
+
   const [queries, setQueries] = useState<string[]>([]);
-  const [aiMatches, setAiMatches] = useLocalStorage<
-    {
-      url: string;
-      title: string;
-      authors: string;
-      year: string;
-      source: string;
-      confidence: string;
-      pro: string;
-      con: string;
-    }[]
-  >({
-    key: `ai_publications_${props.entry.nctId}`, // TODO cache in DB?
-    defaultValue: [],
+  const [aiMatches, setAiMatches] = useState<AiPublicationMatchType>(() => {
+    return getPublicationSearchCacheForNct(props.entry.nctId);
   });
+
   const [rawReferences, setRawReferences] = useState<
     {
       content: string;
@@ -69,6 +71,7 @@ export const PublicationSearch = (props: {
   useEffect(() => {
     if (aiMatches.length > 0) {
       setStep("finished");
+      setPublicationSearchCacheForNct(props.entry.nctId, aiMatches);
     }
   }, [aiMatches]);
 

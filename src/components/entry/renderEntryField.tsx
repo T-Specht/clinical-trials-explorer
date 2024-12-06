@@ -113,11 +113,19 @@ const EntryField = (props: {
                 ></RefreshCcwIcon>
               </div>
             </>
-          ) : (
+          ) : props.aiStatus == "loading" ? (
             <LoaderCircle
               className="animate-spin opacity-55 min-w-4"
               size={20}
             ></LoaderCircle>
+          ) : (
+            <RefreshCcwIcon
+              className="cursor-pointer p-1"
+              size="25px"
+              onClick={() => {
+                if (props.regenerateAi) props.regenerateAi();
+              }}
+            ></RefreshCcwIcon>
           )}
         </div>
       )}

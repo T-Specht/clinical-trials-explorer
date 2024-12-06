@@ -11,6 +11,7 @@ import { RuleGroupType } from "react-querybuilder";
 import { PivotConfigSave } from "@/routes/_navbar/pivottable";
 import { PivotDeriveRule, DEFAULT_DERIVED_RULES } from "./pivot-derive";
 import { TypeItemToOrder } from "@/routes/_navbar/configure-view";
+import { AiPublicationMatchType, generateMetaData } from "./langchain";
 
 // Store Data in Database
 const storage: StateStorage = {
@@ -152,4 +153,66 @@ export const useSettingsStore = create<SettingsStore>()(
       storage: createJSONStorage(() => storage),
     }
   )
+);
+
+type AICacheStore = {
+  publicationSearchCache: Record<string, AiPublicationMatchType>;
+  aiMetadataCache: Record<string, Awaited<ReturnType<typeof generateMetaData>>>;
+  setMetadataCacheForNct: (
+    nctId: string,
+    value: Awaited<ReturnType<typeof generateMetaData>>
+  ) => void;
+  getMetadataCacheForNct: (
+    nctId: string
+  ) => Awaited<ReturnType<typeof generateMetaData>> | null;
+  clearMetadataCacheForNct: (nctId: string) => void;
+  setPublicationSearchCacheForNct: (
+    nctId: string,
+    value: AiPublicationMatchType
+  ) => void;
+  getPublicationSearchCacheForNct: (nctId: string) => AiPublicationMatchType;
+};
+
+export const useAiCacheStore = create<AICacheStore>()(
+  persist(
+    immer((set, get) => ({
+      publicationSearchCache: {},
+      aiMetadataCache: {},
+      setPublicationSearchCacheForNct: (nctId, value) =>
+        set((state) => {
+          state.publicationSearchCache[nctId] = value;
+        }),
+      getPublicationSearchCacheForNct: (nctId) =>
+        get().publicationSearchCache[nctId] || [],
+      setMetadataCacheForNct: (nctId, value) =>
+        set((state) => {
+          state.aiMetadataCache[nctId] = value;
+        }),
+      getMetadataCacheForNct: (nctId) => get().aiMetadataCache[nctId] || null,
+      clearMetadataCacheForNct: (nctId) =>
+        set((state) => {
+          delete state.aiMetadataCache[nctId];
+        }),
+    })),
+
+    {
+      name: "ai_cache",
+      storage: createJSONStorage(() => storage),
+    }
+  )
+);
+
+type UIActionsStore = {
+  lastUpdateUuid: string | null;
+  registerUpdate: () => void;
+};
+
+export const useUiActionsStore = create<UIActionsStore>()(
+  immer((set) => ({
+    lastUpdateUuid: null,
+    registerUpdate: () =>
+      set((state) => {
+        state.lastUpdateUuid = crypto.randomUUID();
+      }),
+  }))
 );

@@ -11,7 +11,8 @@ export type EntryHistory =
       date: string;
       desc?: string;
       type: "new_version";
-      data: APIStudyReturn;
+      apiQuery?: string;
+      data: APIStudyReturn | null;
     };
 
 export const EntryTable = sqliteTable("Entry", {

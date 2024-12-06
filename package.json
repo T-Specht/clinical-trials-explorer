@@ -1,7 +1,7 @@
 {
   "name": "clinical-trials-explorer",
   "productName": "Clinical Trials Explorer",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "App to download, explore, annotate and analyze clinical trials",
   "main": ".vite/build/main.js",
   "scripts": {

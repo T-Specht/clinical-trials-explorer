@@ -6,7 +6,7 @@ import {
   getCustomFields,
   upsertCustomField,
 } from "@/lib/database-wrappers";
-import { getKeys } from "@/lib/utils";
+import { getKeys, omit } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
 import { createInsertSchema } from "drizzle-zod";
@@ -85,7 +85,7 @@ const CField = (props: { field: CustomFieldTypeSelect }) => {
           title={`Edit Field ${field.label}`}
         >
           <CustomFieldsForm
-            initialValues={field}
+            initialValues={omit(field, "createdAt", "updatedAt")}
             onSubmit={(data) => {
               console.log(data);
               close();
@@ -134,7 +134,11 @@ export const CustomFieldsForm = (props: {
   };
 
   return (
-    <form onSubmit={form.handleSubmit(submit)}>
+    <form
+      onSubmit={form.handleSubmit(submit, (err) => {
+        console.warn("form error", err);
+      })}
+    >
       <TextInput
         label="ID Name"
         {...form.register("idName")}

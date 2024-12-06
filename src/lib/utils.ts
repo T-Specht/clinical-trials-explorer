@@ -24,6 +24,8 @@ export function clamp(number: number, min: number, max: number) {
   return Math.max(min, Math.min(number, max));
 }
 
+export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const isDev = () => process.env.NODE_ENV === "development";
 
 export const omit = <T extends {}, K extends keyof T>(obj: T, ...keys: K[]) =>

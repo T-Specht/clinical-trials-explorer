@@ -46,7 +46,7 @@ const config: ForgeConfig = {
           name: "clinical-trials-explorer",
         },
         draft: true,
-        // generateReleaseNotes: true
+        generateReleaseNotes: true
       },
     },
   ],

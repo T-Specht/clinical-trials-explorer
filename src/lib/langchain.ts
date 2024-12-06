@@ -4,7 +4,7 @@ import { JsonOutputFunctionsParser } from "langchain/output_parsers";
 import { z } from "zod";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { useSettingsStore } from "./zustand";
+import { useAiCacheStore, useSettingsStore } from "./zustand";
 import { searxng_api_search } from "./searxng_api";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatOllama } from "@langchain/ollama";
@@ -162,8 +162,12 @@ async function extractPapers(input: string, references: string) {
 
 export async function generateMetaData<T extends z.ZodRawShape>(
   input: string,
-  returnSchema: z.ZodObject<T>
+  returnSchema: z.ZodObject<T>,
 ) {
+  
+  // const cache = useAiCacheStore.getState().getMetadataCacheForNct(nctId);
+  // if(cache != null && !skipCache) return cache as T;
+  
   const baseModel = getModel(0);
   if (!baseModel) {
     throw new Error("No model selected");
@@ -215,6 +219,8 @@ export async function generateMetaData<T extends z.ZodRawShape>(
 //   return matched;
 // }
 
+export type AiPublicationMatchType = Awaited<ReturnType<typeof extractPapers>>['result'];
+
 export async function findPublicationsWithCallbacks(
   input: string,
   callbacks: {
@@ -229,7 +235,7 @@ export async function findPublicationsWithCallbacks(
       }[]
     ) => any;
     aiMatches: (
-      result: Awaited<ReturnType<typeof extractPapers>>['result']
+      result: AiPublicationMatchType
     ) => any;
   },
   addEngines: string[] = []

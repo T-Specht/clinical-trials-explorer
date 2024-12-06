@@ -129,12 +129,23 @@ export const Route = createFileRoute("/_onboarding/api_import")({
 
       const length = studies.length;
 
-      await insertStudiesIntoDatabase(studies, (e) => {
-        notifications.show({
-          message: e,
-          color: "red",
-        });
-      });
+      await insertStudiesIntoDatabase(
+        studies,
+        (e) => {
+          notifications.show({
+            message: e,
+            color: "red",
+          });
+        },
+        undefined,
+        {
+          data: null,
+          date: new Date().toISOString(),
+          type: "new_version",
+          desc: "api import via onboarding",
+          apiQuery: query,
+        }
+      );
 
       notifications.show({
         message: `Import done.`,
@@ -307,10 +318,14 @@ export const Route = createFileRoute("/_onboarding/api_import")({
               </Paper>
 
               <Group justify="center" mt="xl">
-                <Button onClick={() => {
-                  nextStep();
-                  setOnboardingComplete(true);
-                }}>Complete import</Button>
+                <Button
+                  onClick={() => {
+                    nextStep();
+                    setOnboardingComplete(true);
+                  }}
+                >
+                  Complete import
+                </Button>
               </Group>
             </Container>
           </Stepper.Step>

@@ -46,7 +46,11 @@ const Handle = () => <ResizableHandle withHandle className="border-2 " />;
 
 import { buildAiReturnSchemaForCustomFields, FIELDS } from "@/lib/fields";
 import EntryField from "./renderEntryField";
-import { useSettingsStore } from "@/lib/zustand";
+import {
+  useAiCacheStore,
+  useSettingsStore,
+  useUiActionsStore,
+} from "@/lib/zustand";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { generateMetaData } from "@/lib/langchain";
 import { notifications } from "@mantine/notifications";
@@ -62,12 +66,20 @@ import {
   Code,
   Divider,
 } from "@mantine/core";
-import { cn } from "@/lib/utils";
+import { cn, sleep } from "@/lib/utils";
 import { searxng_api_search } from "@/lib/searxng_api";
 import { PublicationSearch } from "./PublicationSearch";
-import { LightbulbIcon, Redo2 } from "lucide-react";
+import {
+  CheckCircle2Icon,
+  CheckIcon,
+  LightbulbIcon,
+  Redo2,
+  SaveIcon,
+} from "lucide-react";
 import { useDebouncedCallback } from "@mantine/hooks";
 import { Link } from "@tanstack/react-router";
+import { useAnimate, motion, useAnimation } from "motion/react";
+import { register } from "plotly.js";
 
 (window as any)["searxng_api_search"] = searxng_api_search;
 
@@ -100,6 +112,12 @@ const Entry = (props: {
       s.entryViewConfig,
     ])
   );
+
+  const [lastUpdateUuid, registerUiUpdateAsSaveEvent] = useUiActionsStore(
+    useShallow((s) => [s.lastUpdateUuid, s.registerUpdate])
+  );
+  const [lastSavedFields, setLastSavedFields] = useState<string[]>([]);
+
   const filter = useSettingsStore((s) => s.filter);
 
   const currentEntry = props.entry;
@@ -129,8 +147,16 @@ const Entry = (props: {
   const aiQuery = useQuery({
     queryKey: ["ai_meta", currentEntry.id, currentEntry.createdAt, aiProvider],
     enabled: !!openAIKey && aiProvider != "disabled",
-    queryFn: () => {
+    queryFn: async () => {
       const schema = buildAiReturnSchemaForCustomFields(props.customFields);
+      const cache = useAiCacheStore
+        .getState()
+        .getMetadataCacheForNct(currentEntry.nctId);
+
+      // Before refetch you have to clear cache to get new data
+      if (cache) {
+        return cache;
+      }
 
       let input = {
         title: currentEntry.title,
@@ -140,9 +166,14 @@ const Entry = (props: {
 
       console.log("Requesting AI data...", currentEntry.id, input);
 
-      return generateMetaData(JSON.stringify(input), schema);
+      let result = await generateMetaData(JSON.stringify(input), schema);
+
+      useAiCacheStore
+        .getState()
+        .setMetadataCacheForNct(currentEntry.nctId, result);
+
+      return result;
     },
-    staleTime: Infinity,
   });
 
   const saveChangesIfAnyForCustomFields = async () => {
@@ -152,6 +183,8 @@ const Entry = (props: {
       customFieldDataCurrent
     );
     const keys = Object.keys(updateDiff);
+
+    let updatedFieldNames: string[] = [];
 
     if (keys.length > 0) {
       console.log("Save updated CF diff", updateDiff);
@@ -177,14 +210,24 @@ const Entry = (props: {
           updateCustomFieldData(field.id, updatedFields);
         }
 
-        notifications.show({
-          title: "Saved changes",
-          message:
-            props.customFields.find((f) => f.id == field.customFieldId)
-              ?.label || "Unknown field",
-        });
+        updatedFieldNames.push(
+          props.customFields.find((f) => f.id == field.customFieldId)?.label ||
+            "Unknown field"
+        );
+
+        // notifications.show({
+        //   title: "Saved changes",
+        //   message:
+        //     props.customFields.find((f) => f.id == field.customFieldId)
+        //       ?.label || "Unknown field",
+        // });
+
+        //registerUiUpdateAsSaveEvent();
       }
     }
+
+    // For save animation and display of fields saved
+    setLastSavedFields(updatedFieldNames);
 
     // queryClient.invalidateQueries({
     //   queryKey: ["filtered_entries", filter],
@@ -209,7 +252,7 @@ const Entry = (props: {
         return prev.map((e) => {
           if (e.id == currentEntry.id) {
             let clone = { ...structuredClone(e), ...newData }; // Merge old data with new data
-            console.log("Updating cache", clone);
+            //console.log("Updating Query cache", clone);
             return clone;
           }
           return e;
@@ -272,15 +315,63 @@ const Entry = (props: {
 
   const visibleFields = entryViewConfig.filter((f) => f.hidden == false);
 
+  const animation = useAnimation();
+
+  const playSaveAnimation = async () => {
+    console.log(lastSavedFields);
+
+    await animation.start("visible");
+    await sleep(2000);
+    await animation.start("hidden");
+  };
+
+  useEffect(() => {
+    if (lastSavedFields.length > 0) {
+      playSaveAnimation();
+    }
+  }, [lastSavedFields]);
+
   return (
     <div className={props.className}>
       <ResizablePanelGroup direction="horizontal" autoSaveId="layout1">
         <ResizablePanel
-          className="min-w-[25%]"
+          className="min-w-[25%] relative"
           defaultSize={50}
           //onResize={(s) => setPanelSizes({ ...panelSizes, left: s })}
         >
           <Container className="h-full overflow-y-scroll">
+            <motion.div
+              //className="absolute top-0 right-0 p-2 z-20 flex space-x-2 items-center w-full justify-end bg-gradient-to-b from-white from-70% bg-opacity-50"
+              className="absolute top-2 right-2 z-20 flex space-x-2 items-center justify-end"
+              variants={{
+                hidden: { opacity: 0, y: -20 },
+                visible: {
+                  opacity: 1,
+                  y: 0,
+                },
+              }}
+              initial="hidden"
+              animate={animation}
+            >
+              {/* <div className="text-xs text-right leading-none">
+                <div className="flex space-x-1 items-center font-bold">
+                  <div>Fields saved successfully to database</div>
+                </div>
+                <div>{lastSavedFields.join(", ")}</div>
+              </div> */}
+              <motion.div
+                className="p-2 text-white rounded-md shadow-md bg-primary"
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{
+                  ease: "easeInOut",
+                  repeat: Infinity,
+                  duration: 1,
+                }}
+              >
+                <SaveIcon size={15}></SaveIcon>
+              </motion.div>
+            </motion.div>
+
             <Group>
               <Title order={4}>{currentEntry.title}</Title>
 
@@ -384,6 +475,10 @@ const Entry = (props: {
                       }
                       aiData={aiQuery.data?.[f.idName]}
                       regenerateAi={() => {
+                        // Remove from Cache first
+                        useAiCacheStore
+                          .getState()
+                          .clearMetadataCacheForNct(currentEntry.nctId);
                         aiQuery.refetch();
                       }}
                       key={f.id}
