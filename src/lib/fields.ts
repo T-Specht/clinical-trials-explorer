@@ -1,13 +1,6 @@
 import { EntryTable, CustomFieldTable } from "@/db/schema";
 import { z } from "zod";
 
-export type UIFieldType = {
-  key: keyof typeof EntryTable.$inferInsert;
-  label: string;
-  description?: string;
-  isDisabled?: boolean;
-};
-
 export const CUSTOM_FIELDS_SEED: (typeof CustomFieldTable.$inferInsert)[] = [
   {
     idName: "usecase",
@@ -36,27 +29,6 @@ export const CUSTOM_FIELDS_SEED: (typeof CustomFieldTable.$inferInsert)[] = [
     description: "",
     isDisabled: false,
   },
-];
-
-export const FIELDS: UIFieldType[] = [
-  // {
-  //   key: "design_masking",
-  //   label: "Design Masking",
-  //   isDisabled: true,
-  //   description: "This field is disabled",
-  // },
-  // {
-  //   key: "design_observation_model",
-  //   label: "Design Observation Model",
-  // },
-  // {
-  //   key: "enrollmentCount",
-  //   label: "Enrollment Count",
-  // },
-  // {
-  //   key: "sex",
-  //   label: "Sex of people",
-  // },
 ];
 
 export const buildAiReturnSchemaForCustomFields = (
@@ -89,4 +61,46 @@ export const buildAiReturnSchemaForCustomFields = (
   );
 
   return schema;
+};
+
+export const buildAiCheckSchemaForCustomFields = (
+  customFields: (typeof CustomFieldTable.$inferSelect)[]
+) => {
+  let fields = customFields.filter(
+    (f) => !!f.aiDescription && f.aiDescription.trim() != ""
+  );
+
+  let outputSchema = z.object(
+    Object.fromEntries(
+      fields.map((f) => {
+        const key = f.idName;
+
+        return [
+          key,
+          z.object({
+            generalAcceptance: z
+              .boolean()
+              .describe(
+                "if you think that the value the user provided for the field is correct in general based on the field description and the study data"
+              ),
+            critique: z
+              .array(z.string().describe("critique bullet point"))
+              .describe(
+                "short critique of the user's value, things you would like to point out, improve or correct if any. Each element in the array should be it's own bullet point. Maximum of 4 bullet points. If you think that the provided value is good, write one small bullet point as an explanation as to why you think so"
+              ),
+            suggestions: z
+              .array(z.string())
+              .describe(
+                "suggestions for better values if necessary, maximum of 4 => only if generalAcceptance = false"
+              ),
+          }),
+        ];
+      })
+    )
+  );
+
+  // let inputSchema = customFields
+  // .filter((f) => !!f.aiDescription && f.aiDescription.trim() != "")
+
+  return outputSchema;
 };

@@ -8,6 +8,7 @@ import { useAiCacheStore, useSettingsStore } from "./zustand";
 import { searxng_api_search } from "./searxng_api";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatOllama } from "@langchain/ollama";
+import { buildAiCheckSchemaForCustomFields } from "./fields";
 
 // import { ChatAnthropicTools } from "@langchain/anthropic/experimental";
 
@@ -67,7 +68,12 @@ export async function generateAISearchQueries(input: string) {
 
   const n = 6;
   const queryGenerationSchema = z.object({
-    queries: z.array(z.string()).length(n).min(n).max(n).describe("search queries"),
+    queries: z
+      .array(z.string())
+      .length(n)
+      .min(n)
+      .max(n)
+      .describe("search queries"),
   });
 
   const prompt = ChatPromptTemplate.fromMessages([
@@ -109,7 +115,7 @@ async function extractPapers(input: string, references: string) {
               "the tool with which you found the source, e.g. pubmed or semantic_scholar"
             ),
           confidence: z
-            .enum(['high', 'medium', 'low'])
+            .enum(["high", "medium", "low"])
             .describe("confidence that this paper matches the clinical study"),
           pro: z
             .string()
@@ -162,12 +168,8 @@ async function extractPapers(input: string, references: string) {
 
 export async function generateMetaData<T extends z.ZodRawShape>(
   input: string,
-  returnSchema: z.ZodObject<T>,
+  returnSchema: z.ZodObject<T>
 ) {
-  
-  // const cache = useAiCacheStore.getState().getMetadataCacheForNct(nctId);
-  // if(cache != null && !skipCache) return cache as T;
-  
   const baseModel = getModel(0);
   if (!baseModel) {
     throw new Error("No model selected");
@@ -198,6 +200,125 @@ export async function generateMetaData<T extends z.ZodRawShape>(
   return result;
 }
 
+export async function checkAllFieldsWithAI(
+  studyDataInput: string,
+  userFieldsWithValues: {
+    fieldName: string;
+    aiDesc: string | null;
+    userValue: string | null | undefined;
+  }[],
+  returnSchema: ReturnType<typeof buildAiCheckSchemaForCustomFields>
+) {
+  const baseModel = getModel(0);
+  if (!baseModel) {
+    throw new Error("No model selected");
+  }
+  const model = baseModel.withStructuredOutput(returnSchema).withRetry({
+    stopAfterAttempt: 3,
+  });
+
+  const prompt = ChatPromptTemplate.fromMessages([
+    [
+      "system",
+      `You are given information about a clinical study in JSON format.
+      The user has provided a value for a specific field that he is interested in. Check if the value is correct/acceptable and provide feedback.
+    `,
+    ],
+    [
+      "user",
+      `
+      ### STUDY DATA ###
+      {input}
+
+      ### USER VALUES ###
+      {userFieldsWithValues}
+      `,
+    ],
+  ]);
+  // Binding "function_call" below makes the model always call the specified function.
+  // If you want to allow the model to call functions selectively, omit it.
+
+  const chain = RunnableSequence.from([prompt, model]);
+
+  const result = await chain.invoke({
+    input: studyDataInput,
+    userFieldsWithValues: JSON.stringify(userFieldsWithValues),
+  });
+
+  //console.log('AI_RESULT_LOG', result);
+
+  return result;
+}
+
+export async function checkSingleFieldWithAI(
+  input: string,
+  aiFieldDescription: string,
+  userValue: string
+  //returnSchema: z.ZodObject<T>,
+) {
+  const baseModel = getModel(0);
+  if (!baseModel) {
+    throw new Error("No model selected");
+  }
+  const model = baseModel
+    .withStructuredOutput(
+      z.object({
+        generalAcceptance: z
+          .boolean()
+          .describe(
+            "if you think that the value the user provided for the field is correct in general based on the field description and the study data"
+          ),
+        critique: z
+          .array(z.string().describe("critique bullet point"))
+          .describe(
+            "short critique of the user's value, things you would like to point out, improve or correct if any. Each element in the array should be it's own bullet point. Maximum of 4 bullet points"
+          ),
+        suggestions: z
+          .array(z.string())
+          .describe(
+            "suggestions for better values if necessary, maximum of 4 => only if generalAcceptance = false"
+          ),
+      })
+    )
+    .withRetry({
+      stopAfterAttempt: 3,
+    });
+
+  const prompt = ChatPromptTemplate.fromMessages([
+    [
+      "system",
+      `You are given information about a clinical study in JSON format.
+      The user has provided a value for a specific field that he is interested in. Check if the value is correct/acceptable and provide feedback.
+    `,
+    ],
+    [
+      "user",
+      `
+      ### STUDY DATA ###
+      {input}
+
+      ### USER VALUE ###
+      Field Description: {ai_field_description}
+      Value to check: {userValue}
+      `,
+    ],
+  ]);
+  // Binding "function_call" below makes the model always call the specified function.
+  // If you want to allow the model to call functions selectively, omit it.
+
+  const chain = RunnableSequence.from([prompt, model]);
+
+  const result = await chain.invoke({
+    input: input,
+    ai_field_description: aiFieldDescription,
+    userValue,
+  });
+
+  //console.log('AI_RESULT_LOG', result);
+
+  return result;
+}
+
 // export async function findPublications(input: string) {
 //   //Get search results
 //   const queries = await generateAISearchQueries(input);
@@ -219,7 +340,9 @@ export async function generateMetaData<T extends z.ZodRawShape>(
 //   return matched;
 // }
 
-export type AiPublicationMatchType = Awaited<ReturnType<typeof extractPapers>>['result'];
+export type AiPublicationMatchType = Awaited<
+  ReturnType<typeof extractPapers>
+>["result"];
 
 export async function findPublicationsWithCallbacks(
   input: string,
@@ -234,9 +357,7 @@ export async function findPublicationsWithCallbacks(
         engine: string;
       }[]
     ) => any;
-    aiMatches: (
-      result: AiPublicationMatchType
-    ) => any;
+    aiMatches: (result: AiPublicationMatchType) => any;
   },
   addEngines: string[] = []
 ) {

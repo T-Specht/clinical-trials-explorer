@@ -50,6 +50,7 @@ const storage: StateStorage = {
 };
 
 export type AIProviders = "openai" | "anthropic" | "ollama" | "disabled";
+export type AiModesType = "suggest" | "check";
 
 type SettingsStore = {
   jumpPoint: string;
@@ -61,6 +62,8 @@ type SettingsStore = {
   openAIModelName: string;
   setOpenAIModelName: (value: string) => void;
   aiProvider: AIProviders;
+  aiMode: AiModesType;
+  setAiMode: (value: AiModesType) => void;
   setAiProvider: (value: AIProviders) => void;
   onboardingComplete: boolean;
   setOnboardingComplete: (value: boolean) => void;
@@ -83,6 +86,11 @@ type SettingsStore = {
 export const useSettingsStore = create<SettingsStore>()(
   persist(
     immer((set) => ({
+      aiMode: "check",
+      setAiMode: (value) =>
+        set((state) => {
+          state.aiMode = value;
+        }),
       jumpPoint: JUMP_POINT_OPTIONS[0],
       setJumpPoint: (value) =>
         set((state) => {

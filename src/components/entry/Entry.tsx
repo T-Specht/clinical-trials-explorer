@@ -12,8 +12,7 @@ import Container from "../Container";
 import { Editor } from "../Editor";
 import {
   CustomFieldEntryTable,
-  CustomFieldTable,
-  EntryTable,
+  CustomFieldTable
 } from "../../db/schema";
 import {
   getAllEntries,
@@ -30,7 +29,7 @@ import "react-json-view-lite/dist/index.css";
 import { diff } from "deep-object-diff";
 import { useDebounce } from "@uidotdev/usehooks";
 
-import { current, produce } from "immer";
+import { produce } from "immer";
 
 const serialize = (data: any) => data.toString();
 const deserialize = (data: string) => data;
@@ -44,7 +43,10 @@ const Handle = () => <ResizableHandle withHandle className="border-2 " />;
 //   isRepurpose: true,
 // });
 
-import { buildAiReturnSchemaForCustomFields, FIELDS } from "@/lib/fields";
+import {
+  buildAiCheckSchemaForCustomFields,
+  buildAiReturnSchemaForCustomFields
+} from "@/lib/fields";
 import EntryField from "./renderEntryField";
 import {
   useAiCacheStore,
@@ -52,34 +54,28 @@ import {
   useUiActionsStore,
 } from "@/lib/zustand";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { generateMetaData } from "@/lib/langchain";
-import { notifications } from "@mantine/notifications";
+import { checkAllFieldsWithAI, generateMetaData } from "@/lib/langchain";
 import {
   Badge,
-  Button,
-  Pill,
-  Group,
+  Button, Group,
   ScrollArea,
-  Title,
-  useComputedColorScheme,
-  Alert,
-  Code,
-  Divider,
+  Title, Alert,
+  Code, ActionIcon,
+  Tooltip
 } from "@mantine/core";
-import { cn, sleep } from "@/lib/utils";
+import { sleep } from "@/lib/utils";
 import { searxng_api_search } from "@/lib/searxng_api";
 import { PublicationSearch } from "./PublicationSearch";
 import {
-  CheckCircle2Icon,
-  CheckIcon,
   LightbulbIcon,
   Redo2,
   SaveIcon,
+  SearchCheckIcon
 } from "lucide-react";
 import { useDebouncedCallback } from "@mantine/hooks";
 import { Link } from "@tanstack/react-router";
-import { useAnimate, motion, useAnimation } from "motion/react";
-import { register } from "plotly.js";
+import { motion, useAnimation } from "motion/react";
+import useKeyboardShortcut from "use-keyboard-shortcut";
 
 (window as any)["searxng_api_search"] = searxng_api_search;
 
@@ -101,6 +97,8 @@ const Entry = (props: {
     searxngUrl,
     deriveRules,
     entryViewConfig,
+    aiMode,
+    filter
   ] = useSettingsStore(
     useShallow((s) => [
       s.jumpPoint,
@@ -110,15 +108,14 @@ const Entry = (props: {
       s.searxngUrl,
       s.pivotDeriveRules,
       s.entryViewConfig,
+      s.aiMode,
+      s.filter
     ])
   );
 
-  const [lastUpdateUuid, registerUiUpdateAsSaveEvent] = useUiActionsStore(
-    useShallow((s) => [s.lastUpdateUuid, s.registerUpdate])
-  );
+
   const [lastSavedFields, setLastSavedFields] = useState<string[]>([]);
 
-  const filter = useSettingsStore((s) => s.filter);
 
   const currentEntry = props.entry;
 
@@ -145,9 +142,9 @@ const Entry = (props: {
   const [lastSave, setLastSave] = useState({ customFieldDataCurrent });
   const queryClient = useQueryClient();
 
-  const aiQuery = useQuery({
+  const aiSuggestQuery = useQuery({
     queryKey: ["ai_meta", currentEntry.id, currentEntry.createdAt, aiProvider],
-    enabled: !!openAIKey && aiProvider != "disabled",
+    enabled: !!openAIKey && aiProvider != "disabled" && aiMode == "suggest",
     queryFn: async () => {
       const schema = buildAiReturnSchemaForCustomFields(props.customFields);
       const cache = useAiCacheStore
@@ -175,6 +172,53 @@ const Entry = (props: {
 
       return result;
     },
+  });
+
+  const aiCheckQuery = useQuery({
+    queryKey: [
+      "ai_meta_check",
+      currentEntry.id,
+      currentEntry.createdAt,
+      aiProvider,
+    ],
+    //enabled: !!openAIKey && aiProvider != "disabled" && aiMode == "check",
+    enabled: false, // no fetch on mount only with button
+    queryFn: async () => {
+      const schema = buildAiCheckSchemaForCustomFields(props.customFields);
+      const userInputDataWithFieldsDef = props.customFields
+        .map((c) => ({
+          fieldName: c.idName,
+          aiDesc: c.aiDescription,
+          userValue:
+            customFieldDataCurrent.find((cf) => cf.customFieldId == c.id)
+              ?.value || null,
+        }))
+        .filter((c) => c.aiDesc && c.aiDesc.trim() != "");
+
+      console.log(customFieldDataCurrent, userInputDataWithFieldsDef);
+
+      let input = JSON.stringify({
+        title: currentEntry.title,
+        description: currentEntry.rawJson?.descriptionModule,
+        intervention: currentEntry.rawJson?.armsInterventionsModule,
+      });
+
+      let res = await checkAllFieldsWithAI(
+        input,
+        userInputDataWithFieldsDef,
+        schema
+      );
+
+      console.log("AI_CHECK_ALL", res);
+
+      return res;
+    },
+  });
+
+  useKeyboardShortcut(["Shift", "Control", "c"], () => aiCheckQuery.refetch(), {
+    overrideSystem: true,
+    ignoreInputFields: true,
+    repeatOnHold: false,
   });
 
   const saveChangesIfAnyForCustomFields = async () => {
@@ -373,6 +417,32 @@ const Entry = (props: {
               </motion.div>
             </motion.div>
 
+            {aiMode == "check" && aiProvider != "disabled" && (
+              <div
+                //className="absolute top-0 right-0 p-2 z-20 flex space-x-2 items-center w-full justify-end bg-gradient-to-b from-white from-70% bg-opacity-50"
+                className="absolute bottom-2 right-2 z-20 flex space-x-2 items-center justify-end"
+              >
+                {/* <div className="text-xs text-right leading-none">
+                <div className="flex space-x-1 items-center font-bold">
+                  <div>Fields saved successfully to database</div>
+                </div>
+                <div>{lastSavedFields.join(", ")}</div>
+              </div> */}
+                <Tooltip label="Check custom fields data with AI">
+                  <ActionIcon
+                    className="shadow-md"
+                    size={"md"}
+                    loading={
+                      aiCheckQuery.isLoading || aiCheckQuery.isRefetching
+                    }
+                    onClick={() => aiCheckQuery.refetch()}
+                  >
+                    <SearchCheckIcon size={15}></SearchCheckIcon>
+                  </ActionIcon>
+                </Tooltip>
+              </div>
+            )}
+
             <Group>
               <Title order={4}>{currentEntry.title}</Title>
 
@@ -464,23 +534,40 @@ const Entry = (props: {
                   return (
                     <EntryField
                       autocomplete={f.autocompleteEnabled ? acValues : null}
-                      aiStatus={
-                        aiProvider == "disabled" ||
-                        !openAIKey ||
-                        !f.aiDescription ||
-                        f.aiDescription?.trim() == ""
-                          ? "disabled"
-                          : aiQuery.isLoading || aiQuery.isRefetching
-                            ? "loading"
-                            : "data"
-                      }
-                      aiData={aiQuery.data?.[f.idName]}
-                      regenerateAi={() => {
-                        // Remove from Cache first
-                        useAiCacheStore
-                          .getState()
-                          .clearMetadataCacheForNct(currentEntry.nctId);
-                        aiQuery.refetch();
+                      aiConfig={{
+                        enabled: aiProvider != "disabled",
+                        mode: aiMode,
+                        suggestionModeConfig: {
+                          aiData: aiSuggestQuery.data?.[f.idName],
+                          aiStatus:
+                            aiProvider == "disabled" ||
+                            !openAIKey ||
+                            !f.aiDescription ||
+                            f.aiDescription?.trim() == ""
+                              ? "disabled"
+                              : aiSuggestQuery.isLoading ||
+                                  aiSuggestQuery.isRefetching
+                                ? "loading"
+                                : "data",
+                          regenerateAi: () => {
+                            // Remove from Cache first
+                            useAiCacheStore
+                              .getState()
+                              .clearMetadataCacheForNct(currentEntry.nctId);
+                            aiSuggestQuery.refetch();
+                          },
+                        },
+                        checkModeConfig: {
+                          aiData: aiCheckQuery.data?.[f.idName],
+                          queryStatus: aiCheckQuery.status,
+                          input: JSON.stringify({
+                            title: currentEntry.title,
+                            description:
+                              currentEntry.rawJson?.descriptionModule,
+                            intervention:
+                              currentEntry.rawJson?.armsInterventionsModule,
+                          }),
+                        },
                       }}
                       key={f.id}
                       customFieldDefinition={f}

@@ -134,23 +134,48 @@ export const Route = createFileRoute("/_navbar/settings")({
             }
           ></TextInput>
         </Group>
-        <TextInput
-          label="Model Name"
-          placeholder={`${DEFAULT_AI_MODELS[settingsStore.aiProvider]}`}
-          description={
-            <div>
-              The model name to use for AI responses. <br />
-              Leave blank to use the default model (OpenAI:{" "}
-              {DEFAULT_AI_MODELS.openai}, Anthropic:{" "}
-              {DEFAULT_AI_MODELS.anthropic})
-            </div>
-          }
-          disabled={settingsStore.aiProvider == "disabled"}
-          value={settingsStore.openAIModelName || ""}
-          onChange={(e) =>
-            settingsStore.setOpenAIModelName(e.target.value.trim())
-          }
-        ></TextInput>
+        <Group>
+          <Select
+            data={[
+              {
+                value: "check",
+                label: "Check",
+              },
+              {
+                value: "suggest",
+                label: "Suggest",
+              },
+            ]}
+            description={
+              <div>
+                Check mode will only check the input provided by the user and
+                may give a critqiue. <br></br>
+                Suggest mode will provide a suggestion based on the input
+                without prior user input
+              </div>
+            }
+            value={settingsStore.aiMode}
+            onChange={(e) => settingsStore.setAiMode((e as any) || "")}
+            label="AI Mode"
+          ></Select>
+          <TextInput
+            label="Model Name"
+            placeholder={`${DEFAULT_AI_MODELS[settingsStore.aiProvider]}`}
+            description={
+              <div>
+                The model name to use for AI responses. <br />
+                Leave blank to use the default model (OpenAI:{" "}
+                {DEFAULT_AI_MODELS.openai}, Anthropic:{" "}
+                {DEFAULT_AI_MODELS.anthropic})
+              </div>
+            }
+            disabled={settingsStore.aiProvider == "disabled"}
+            value={settingsStore.openAIModelName || ""}
+            onChange={(e) =>
+              settingsStore.setOpenAIModelName(e.target.value.trim())
+            }
+          ></TextInput>
+        </Group>
 
         <Group>
           <Title order={4}>SearxNG Settings</Title>

@@ -1,20 +1,57 @@
 import { CustomFieldTable, EntryTable } from "@/db/schema";
-import { UIFieldType } from "@/lib/fields";
 // import { Input } from "../ui/input";
 // import { Checkbox } from "../ui/checkbox";
-import { BotIcon, Brain, LoaderCircle, RefreshCcwIcon } from "lucide-react";
-import { Autocomplete, Checkbox, NumberInput, TextInput } from "@mantine/core";
+import {
+  BotIcon,
+  Brain,
+  CheckCircleIcon,
+  LightbulbIcon,
+  LoaderCircle,
+  RefreshCcwIcon,
+  ShieldCheckIcon,
+  SparklesIcon,
+  XCircleIcon,
+} from "lucide-react";
+import {
+  ActionIcon,
+  Autocomplete,
+  Button,
+  Checkbox,
+  Code,
+  NumberInput,
+  TextInput,
+  Title,
+} from "@mantine/core";
+import { AiModesType } from "@/lib/zustand";
+import { useMutation } from "@tanstack/react-query";
+import { checkAllFieldsWithAI, checkSingleFieldWithAI } from "@/lib/langchain";
+import { AIValidationResult } from "./AIValidationResult";
+
+export type AIConfiguration = {
+  enabled: boolean;
+  mode: AiModesType;
+  suggestionModeConfig: {
+    aiStatus: "loading" | "disabled" | "data";
+    regenerateAi?: () => void;
+    aiData:
+      | {
+          value: any;
+          explanation: string;
+        }
+      | undefined;
+  };
+  checkModeConfig: {
+    input: string;
+    queryStatus: "error" | "success" | "pending";
+    aiData:
+      | Awaited<ReturnType<typeof checkAllFieldsWithAI>>[string]
+      | undefined;
+  };
+};
 
 const EntryField = (props: {
   customFieldDefinition: typeof CustomFieldTable.$inferSelect;
-  regenerateAi?: () => void;
-  aiData?:
-    | {
-        value: any;
-        explanation: string;
-      }
-    | undefined;
-  aiStatus: "loading" | "disabled" | "data";
+  aiConfig: AIConfiguration;
   onChange: (val: any) => void;
   value: any;
   autocomplete?: string[] | null;
@@ -24,6 +61,26 @@ const EntryField = (props: {
   const keyOrId = customField.id;
   const f = customField;
   const dataType = customField.dataType;
+  const hasAiDesc = !!f.aiDescription;
+
+  const {
+    enabled: aiEnabled,
+    checkModeConfig,
+    mode: aiMode,
+    suggestionModeConfig,
+  } = props.aiConfig;
+
+  const aiCheckFn = useMutation({
+    mutationFn: async () => {
+      let res = await checkSingleFieldWithAI(
+        checkModeConfig.input,
+        f.aiDescription || "",
+        value
+      );
+      console.log("AI_CHECK", res);
+      return res;
+    },
+  });
 
   return (
     <div>
@@ -51,6 +108,25 @@ const EntryField = (props: {
                     onChange={(val) => onChange(val)}
                     data={props.autocomplete || []}
                     disabled={f.isDisabled}
+                    rightSection={
+                      aiEnabled &&
+                      hasAiDesc &&
+                      aiMode == "check" &&
+                      checkModeConfig.aiData &&
+                      (checkModeConfig.aiData.generalAcceptance ? (
+                        <CheckCircleIcon
+                          className="p-1 text-green"
+                          strokeWidth={3}
+                          size="25px"
+                        ></CheckCircleIcon>
+                      ) : (
+                        <XCircleIcon
+                          strokeWidth={3}
+                          className="p-1 text-red"
+                          size="25px"
+                        ></XCircleIcon>
+                      ))
+                    }
                   />
                 </div>
               );
@@ -85,35 +161,45 @@ const EntryField = (props: {
         }
       })()}
       {f.description && <div className="text-sm">{f.description}</div>}
-      {props.aiStatus != "disabled" && (
+      {aiMode == "check" &&
+        hasAiDesc &&
+        props.aiConfig.checkModeConfig.aiData && (
+          <AIValidationResult
+            data={props.aiConfig.checkModeConfig.aiData}
+            onChange={props.onChange}
+          />
+        )}
+      {suggestionModeConfig.aiStatus != "disabled" && aiMode == "suggest" && (
         <div className="flex space-x-1 justify-start items-start text-sm mt-2 mb-4 bg-secondary rounded-md py-4 px-2 opacity-60">
           <div>
             <BotIcon className="min-w-5 p-1" size="25px"></BotIcon>
           </div>
-          {props.aiData && props.aiStatus != "loading" ? (
+          {suggestionModeConfig.aiData &&
+          suggestionModeConfig.aiStatus != "loading" ? (
             <>
               <div className="flex-1">
                 <code
                   onClick={() => {
-                    onChange(props.aiData?.value);
+                    onChange(suggestionModeConfig.aiData?.value);
                   }}
                   className="cursor-pointer"
                 >
-                  {String(props.aiData.value)}
+                  {String(suggestionModeConfig.aiData.value)}
                 </code>
-                : {props.aiData.explanation}
+                : {suggestionModeConfig.aiData.explanation}
               </div>
               <div>
                 <RefreshCcwIcon
                   className="cursor-pointer p-1"
                   size="25px"
                   onClick={() => {
-                    if (props.regenerateAi) props.regenerateAi();
+                    if (suggestionModeConfig.regenerateAi)
+                      suggestionModeConfig.regenerateAi();
                   }}
                 ></RefreshCcwIcon>
               </div>
             </>
-          ) : props.aiStatus == "loading" ? (
+          ) : suggestionModeConfig.aiStatus == "loading" ? (
             <LoaderCircle
               className="animate-spin opacity-55 min-w-4"
               size={20}
@@ -123,7 +209,8 @@ const EntryField = (props: {
               className="cursor-pointer p-1"
               size="25px"
               onClick={() => {
-                if (props.regenerateAi) props.regenerateAi();
+                if (suggestionModeConfig.regenerateAi)
+                  suggestionModeConfig.regenerateAi();
               }}
             ></RefreshCcwIcon>
           )}
