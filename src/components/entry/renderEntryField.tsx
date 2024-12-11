@@ -70,18 +70,6 @@ const EntryField = (props: {
     suggestionModeConfig,
   } = props.aiConfig;
 
-  const aiCheckFn = useMutation({
-    mutationFn: async () => {
-      let res = await checkSingleFieldWithAI(
-        checkModeConfig.input,
-        f.aiDescription || "",
-        value
-      );
-      console.log("AI_CHECK", res);
-      return res;
-    },
-  });
-
   return (
     <div>
       {(() => {

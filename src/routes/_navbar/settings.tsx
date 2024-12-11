@@ -9,8 +9,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import { QueryBuilder, RuleGroupType, formatQuery } from "react-querybuilder";
-
-import { FIELDS } from "@/lib/fields";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { sql, getTableColumns } from "drizzle-orm";

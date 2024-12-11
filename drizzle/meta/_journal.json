@@ -22,6 +22,13 @@
       "when": 1733247175067,
       "tag": "0002_add-autocomplete",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1733928724486,
+      "tag": "0003_default_timestamps_unix",
+      "breakpoints": true
     }
   ]
 }

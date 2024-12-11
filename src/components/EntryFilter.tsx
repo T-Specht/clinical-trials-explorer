@@ -136,6 +136,7 @@ const EntryFilter = (props: { showCount?: boolean }) => {
         onQueryChange={setQuery}
       ></QueryBuilder>
       </QueryBuilderMantine>
+      <div>Please note that filters are case sensitive!</div>
       {!isLoading && props.showCount && (
         <div>
           Number of database entries matching: <code>{data}</code>

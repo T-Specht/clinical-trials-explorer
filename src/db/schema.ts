@@ -18,10 +18,10 @@ export type EntryHistory =
 export const EntryTable = sqliteTable("Entry", {
   id: integer("id").primaryKey().notNull(),
   createdAt: integer("createdAt", { mode: "timestamp" })
-    .default(new Date())
+    .default(sql`(unixepoch())`)
     .notNull(),
   updatedAt: integer("updatedAt", { mode: "timestamp" })
-    .default(new Date())
+    .default(sql`(unixepoch())`)
     .$onUpdate(() => new Date())
     .notNull(),
   nctId: text("nct_id").notNull(),
@@ -35,10 +35,10 @@ export const EntryTable = sqliteTable("Entry", {
 export const CustomFieldTable = sqliteTable("CustomField", {
   id: integer("id").primaryKey().notNull(),
   createdAt: integer("createdAt", { mode: "timestamp" })
-    .default(sql`CURRENT_TIMESTAMP`)
+    .default(sql`(unixepoch())`)
     .notNull(),
   updatedAt: integer("updatedAt", { mode: "timestamp" })
-    .default(sql`CURRENT_TIMESTAMP`)
+    .default(sql`(unixepoch())`)
     .$onUpdate(() => new Date())
     .notNull(),
   idName: text("id_name").notNull().unique(),
@@ -59,10 +59,10 @@ export const CustomFieldTable = sqliteTable("CustomField", {
 export const CustomFieldEntryTable = sqliteTable("CustomFieldEntry", {
   id: integer("id").primaryKey().notNull(),
   createdAt: integer("createdAt", { mode: "timestamp" })
-    .default(new Date())
+    .default(sql`(unixepoch())`)
     .notNull(),
   updatedAt: integer("updatedAt", { mode: "timestamp" })
-    .default(new Date())
+    .default(sql`(unixepoch())`)
     .$onUpdate(() => new Date())
     .notNull(),
   customFieldId: integer("custom_field_id")
@@ -77,10 +77,10 @@ export const CustomFieldEntryTable = sqliteTable("CustomFieldEntry", {
 export const PersistentZustandTable = sqliteTable("PersistentZustand", {
   id: integer("id").primaryKey().notNull(),
   createdAt: integer("createdAt", { mode: "timestamp" })
-    .default(new Date())
+    .default(sql`(unixepoch())`)
     .notNull(),
   updatedAt: integer("updatedAt", { mode: "timestamp" })
-    .default(new Date())
+    .default(sql`(unixepoch())`)
     .$onUpdate(() => new Date())
     .notNull(),
   name: text("name").notNull().unique(),

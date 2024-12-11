@@ -298,7 +298,8 @@ export const importLegacyData = async (entries: LegacyExportEntry[]) => {
           {
             customFieldId: getCustomFieldIdByName("legacy_import_date"),
             entryId: dbId,
-            value: le.legacy_import_date,
+            //value: le.legacy_import_date,
+            value: le.createdAt // Use this for legacy import date because the other one is the legacy import date for the version prior to v1
           },
           {
             customFieldId: getCustomFieldIdByName("publicationStatus"),
