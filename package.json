@@ -1,7 +1,7 @@
 {
   "name": "clinical-trials-explorer",
   "productName": "Clinical Trials Explorer",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "repository": "https://github.com/T-Specht/clinical-trials-explorer/",
   "description": "App to download, explore, annotate and analyze clinical trials",
   "main": ".vite/build/main.js",
