@@ -22,6 +22,7 @@ import { Route as NavbarPivottableImport } from './routes/_navbar/pivottable'
 import { Route as NavbarPivotDerivedPageImport } from './routes/_navbar/pivot-derived-page'
 import { Route as NavbarJupyterImport } from './routes/_navbar/jupyter'
 import { Route as NavbarGraphsImport } from './routes/_navbar/graphs'
+import { Route as NavbarGraphologyImport } from './routes/_navbar/graphology'
 import { Route as NavbarCustomfieldsImport } from './routes/_navbar/custom_fields'
 import { Route as NavbarConfigureViewImport } from './routes/_navbar/configure-view'
 
@@ -92,6 +93,12 @@ const NavbarGraphsRoute = NavbarGraphsImport.update({
   getParentRoute: () => NavbarRoute,
 } as any)
 
+const NavbarGraphologyRoute = NavbarGraphologyImport.update({
+  id: '/graphology',
+  path: '/graphology',
+  getParentRoute: () => NavbarRoute,
+} as any)
+
 const NavbarCustomfieldsRoute = NavbarCustomfieldsImport.update({
   id: '/custom_fields',
   path: '/custom_fields',
@@ -141,6 +148,13 @@ declare module '@tanstack/react-router' {
       path: '/custom_fields'
       fullPath: '/custom_fields'
       preLoaderRoute: typeof NavbarCustomfieldsImport
+      parentRoute: typeof NavbarImport
+    }
+    '/_navbar/graphology': {
+      id: '/_navbar/graphology'
+      path: '/graphology'
+      fullPath: '/graphology'
+      preLoaderRoute: typeof NavbarGraphologyImport
       parentRoute: typeof NavbarImport
     }
     '/_navbar/graphs': {
@@ -207,6 +221,7 @@ declare module '@tanstack/react-router' {
 interface NavbarRouteChildren {
   NavbarConfigureViewRoute: typeof NavbarConfigureViewRoute
   NavbarCustomfieldsRoute: typeof NavbarCustomfieldsRoute
+  NavbarGraphologyRoute: typeof NavbarGraphologyRoute
   NavbarGraphsRoute: typeof NavbarGraphsRoute
   NavbarJupyterRoute: typeof NavbarJupyterRoute
   NavbarPivotDerivedPageRoute: typeof NavbarPivotDerivedPageRoute
@@ -217,6 +232,7 @@ interface NavbarRouteChildren {
 const NavbarRouteChildren: NavbarRouteChildren = {
   NavbarConfigureViewRoute: NavbarConfigureViewRoute,
   NavbarCustomfieldsRoute: NavbarCustomfieldsRoute,
+  NavbarGraphologyRoute: NavbarGraphologyRoute,
   NavbarGraphsRoute: NavbarGraphsRoute,
   NavbarJupyterRoute: NavbarJupyterRoute,
   NavbarPivotDerivedPageRoute: NavbarPivotDerivedPageRoute,
@@ -233,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/display_filtered_entries': typeof DisplayfilteredentriesRoute
   '/configure-view': typeof NavbarConfigureViewRoute
   '/custom_fields': typeof NavbarCustomfieldsRoute
+  '/graphology': typeof NavbarGraphologyRoute
   '/graphs': typeof NavbarGraphsRoute
   '/jupyter': typeof NavbarJupyterRoute
   '/pivot-derived-page': typeof NavbarPivotDerivedPageRoute
@@ -249,6 +266,7 @@ export interface FileRoutesByTo {
   '/display_filtered_entries': typeof DisplayfilteredentriesRoute
   '/configure-view': typeof NavbarConfigureViewRoute
   '/custom_fields': typeof NavbarCustomfieldsRoute
+  '/graphology': typeof NavbarGraphologyRoute
   '/graphs': typeof NavbarGraphsRoute
   '/jupyter': typeof NavbarJupyterRoute
   '/pivot-derived-page': typeof NavbarPivotDerivedPageRoute
@@ -266,6 +284,7 @@ export interface FileRoutesById {
   '/display_filtered_entries': typeof DisplayfilteredentriesRoute
   '/_navbar/configure-view': typeof NavbarConfigureViewRoute
   '/_navbar/custom_fields': typeof NavbarCustomfieldsRoute
+  '/_navbar/graphology': typeof NavbarGraphologyRoute
   '/_navbar/graphs': typeof NavbarGraphsRoute
   '/_navbar/jupyter': typeof NavbarJupyterRoute
   '/_navbar/pivot-derived-page': typeof NavbarPivotDerivedPageRoute
@@ -284,6 +303,7 @@ export interface FileRouteTypes {
     | '/display_filtered_entries'
     | '/configure-view'
     | '/custom_fields'
+    | '/graphology'
     | '/graphs'
     | '/jupyter'
     | '/pivot-derived-page'
@@ -299,6 +319,7 @@ export interface FileRouteTypes {
     | '/display_filtered_entries'
     | '/configure-view'
     | '/custom_fields'
+    | '/graphology'
     | '/graphs'
     | '/jupyter'
     | '/pivot-derived-page'
@@ -314,6 +335,7 @@ export interface FileRouteTypes {
     | '/display_filtered_entries'
     | '/_navbar/configure-view'
     | '/_navbar/custom_fields'
+    | '/_navbar/graphology'
     | '/_navbar/graphs'
     | '/_navbar/jupyter'
     | '/_navbar/pivot-derived-page'
@@ -369,6 +391,7 @@ export const routeTree = rootRoute
       "children": [
         "/_navbar/configure-view",
         "/_navbar/custom_fields",
+        "/_navbar/graphology",
         "/_navbar/graphs",
         "/_navbar/jupyter",
         "/_navbar/pivot-derived-page",
@@ -385,6 +408,10 @@ export const routeTree = rootRoute
     },
     "/_navbar/custom_fields": {
       "filePath": "_navbar/custom_fields.tsx",
+      "parent": "/_navbar"
+    },
+    "/_navbar/graphology": {
+      "filePath": "_navbar/graphology.tsx",
       "parent": "/_navbar"
     },
     "/_navbar/graphs": {

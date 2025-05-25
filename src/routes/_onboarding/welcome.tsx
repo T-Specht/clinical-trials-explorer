@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_onboarding/welcome")({
         <div className="my-6 text-center">
           To use this app, you will need to import data. If you have used the
           previous version, you may transfer the data to this new version.
-          Alternativly, you can start from the ground up with data imported
+          Alternatively, you can start from the ground up with data imported
           directly from the clinicaltrials.gov API.
         </div>
 

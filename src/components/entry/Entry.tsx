@@ -10,10 +10,7 @@ import { useEffect, useState } from "react";
 import Markdown from "marked-react";
 import Container from "../Container";
 import { Editor } from "../Editor";
-import {
-  CustomFieldEntryTable,
-  CustomFieldTable
-} from "../../db/schema";
+import { CustomFieldEntryTable, CustomFieldTable } from "../../db/schema";
 import {
   getAllEntries,
   getUniqueValuesForStringCustomFields,
@@ -45,7 +42,7 @@ const Handle = () => <ResizableHandle withHandle className="border-2 " />;
 
 import {
   buildAiCheckSchemaForCustomFields,
-  buildAiReturnSchemaForCustomFields
+  buildAiReturnSchemaForCustomFields,
 } from "@/lib/fields";
 import EntryField from "./renderEntryField";
 import {
@@ -57,21 +54,19 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { checkAllFieldsWithAI, generateMetaData } from "@/lib/langchain";
 import {
   Badge,
-  Button, Group,
+  Button,
+  Group,
   ScrollArea,
-  Title, Alert,
-  Code, ActionIcon,
-  Tooltip
+  Title,
+  Alert,
+  Code,
+  ActionIcon,
+  Tooltip,
 } from "@mantine/core";
 import { sleep } from "@/lib/utils";
 import { searxng_api_search } from "@/lib/searxng_api";
 import { PublicationSearch } from "./PublicationSearch";
-import {
-  LightbulbIcon,
-  Redo2,
-  SaveIcon,
-  SearchCheckIcon
-} from "lucide-react";
+import { LightbulbIcon, Redo2, SaveIcon, SearchCheckIcon } from "lucide-react";
 import { useDebouncedCallback } from "@mantine/hooks";
 import { Link } from "@tanstack/react-router";
 import { motion, useAnimation } from "motion/react";
@@ -98,7 +93,7 @@ const Entry = (props: {
     deriveRules,
     entryViewConfig,
     aiMode,
-    filter
+    filter,
   ] = useSettingsStore(
     useShallow((s) => [
       s.jumpPoint,
@@ -109,13 +104,11 @@ const Entry = (props: {
       s.pivotDeriveRules,
       s.entryViewConfig,
       s.aiMode,
-      s.filter
+      s.filter,
     ])
   );
 
-
   const [lastSavedFields, setLastSavedFields] = useState<string[]>([]);
-
 
   const currentEntry = props.entry;
 
@@ -144,7 +137,10 @@ const Entry = (props: {
 
   const aiSuggestQuery = useQuery({
     queryKey: ["ai_meta", currentEntry.id, currentEntry.createdAt, aiProvider],
-    enabled: !!openAIKey && aiProvider != "disabled" && aiMode == "suggest",
+    enabled:
+      !!openAIKey &&
+      aiProvider != "disabled" &&
+      ["suggest", "both"].includes(aiMode),
     queryFn: async () => {
       const schema = buildAiReturnSchemaForCustomFields(props.customFields);
       const cache = useAiCacheStore
@@ -216,7 +212,7 @@ const Entry = (props: {
   });
 
   useKeyboardShortcut(["Shift", "Control", "c"], () => aiCheckQuery.refetch(), {
-    overrideSystem: true,
+    //overrideSystem: true,
     ignoreInputFields: true,
     repeatOnHold: false,
   });
@@ -311,10 +307,10 @@ const Entry = (props: {
     });
   };
 
-  // Only save after 2 seconds of no changes
+  // Only save after 1 seconds of no changes
   const debouncedCustomFieldDataCurrent = useDebounce(
     customFieldDataCurrent,
-    2000
+    1000
   );
 
   useEffect(() => {
@@ -417,7 +413,7 @@ const Entry = (props: {
               </motion.div>
             </motion.div>
 
-            {aiMode == "check" && aiProvider != "disabled" && (
+            {["check", "both"].includes(aiMode) && aiProvider != "disabled" && (
               <div
                 //className="absolute top-0 right-0 p-2 z-20 flex space-x-2 items-center w-full justify-end bg-gradient-to-b from-white from-70% bg-opacity-50"
                 className="absolute bottom-2 right-2 z-20 flex space-x-2 items-center justify-end"
@@ -446,7 +442,16 @@ const Entry = (props: {
             <Group>
               <Title order={4}>{currentEntry.title}</Title>
 
-              <Badge>{currentEntry.nctId}</Badge>
+              <Tooltip label="Click to open in external default browser">
+                <a
+                  href={`https://clinicaltrials.gov/study/${currentEntry.nctId}`}
+                  target="_blank"
+                  className="cursor-pointer"
+                  rel="noopener noreferrer"
+                >
+                  <Badge>{currentEntry.nctId}</Badge>
+                </a>
+              </Tooltip>
             </Group>
 
             <h3>Description</h3>

@@ -1,6 +1,5 @@
 import Container from "@/components/Container";
 import EntryFilter from "@/components/EntryFilter";
-import { Button } from "@/components/ui/button";
 import {
   aggregateConditions,
   aggregateMeshTerms,
@@ -10,8 +9,10 @@ import {
   aggregateHighRelevanceLeavesMeshTerms,
 } from "@/lib/data-transforms";
 import { getAllEntries } from "@/lib/database-wrappers";
+import { isDev } from "@/lib/utils";
+import { Button, Group } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Config } from "plotly.js";
 import Plot, { PlotParams } from "react-plotly.js";
 
@@ -68,14 +69,23 @@ const PlotPage = () => {
     <Container>
       <EntryFilter showCount></EntryFilter>
 
-      <Button
-        onClick={() => {
-          refetch();
-        }}
-        className="mb-4"
-      >
-        Regenerate charts
-      </Button>
+      <Group className="mb-4">
+        <Button
+          onClick={() => {
+            refetch();
+          }}
+        >
+          Regenerate charts
+        </Button>
+
+        {isDev() && (
+          <Link to="/graphology">
+            <Button size="xs" variant="subtle">
+              Mesh Graphs
+            </Button>
+          </Link>
+        )}
+      </Group>
 
       {!data ? (
         <div>Loading...</div>
@@ -145,11 +155,14 @@ const PlotPage = () => {
                 //colorscale: 'Viridis'
               },
             ]}
+            
             layout={{
               //map: { center: { lon: 60, lat: 30 }, style: "outdoors", zoom: 2 },
               //@ts-ignore - this is a bug in the types
               coloraxis: { colorscale: "Viridis" },
               title: "Locations Density Map",
+              width: 1500,
+              height: 1000,
               map: {
                 center: { lon: 10, lat: 40 },
                 zoom: 0,
@@ -169,6 +182,8 @@ const PlotPage = () => {
             layout={{
               //@ts-ignore - this is a bug in the types
               coloraxis: { colorscale: "Viridis" },
+              width: 1500,
+              height: 1000,
               map: {
                 center: { lon: 10, lat: 40 },
                 zoom: 0,

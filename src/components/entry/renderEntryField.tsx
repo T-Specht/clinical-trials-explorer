@@ -19,6 +19,7 @@ import {
   Checkbox,
   Code,
   NumberInput,
+  Textarea,
   TextInput,
   Title,
 } from "@mantine/core";
@@ -74,6 +75,20 @@ const EntryField = (props: {
     <div>
       {(() => {
         switch (dataType) {
+          case "textarea":
+            return (
+              <div>
+                <Textarea
+                  label={f.label}
+                  value={value || ""}
+                  onChange={(e) => onChange(e.target.value)}
+                  disabled={f.isDisabled}
+                  autosize
+                  minRows={2}
+                  resize="vertical"
+                />
+              </div>
+            );
           case "number":
             return (
               <div>
@@ -99,7 +114,7 @@ const EntryField = (props: {
                     rightSection={
                       aiEnabled &&
                       hasAiDesc &&
-                      aiMode == "check" &&
+                      ["check", "both"].includes(aiMode) &&
                       checkModeConfig.aiData &&
                       (checkModeConfig.aiData.generalAcceptance ? (
                         <CheckCircleIcon
@@ -149,7 +164,7 @@ const EntryField = (props: {
         }
       })()}
       {f.description && <div className="text-sm">{f.description}</div>}
-      {aiMode == "check" &&
+      {["check", "both"].includes(aiMode) &&
         hasAiDesc &&
         props.aiConfig.checkModeConfig.aiData && (
           <AIValidationResult
@@ -157,53 +172,54 @@ const EntryField = (props: {
             onChange={props.onChange}
           />
         )}
-      {suggestionModeConfig.aiStatus != "disabled" && aiMode == "suggest" && (
-        <div className="flex space-x-1 justify-start items-start text-sm mt-2 mb-4 bg-secondary rounded-md py-4 px-2 opacity-60">
-          <div>
-            <BotIcon className="min-w-5 p-1" size="25px"></BotIcon>
+      {suggestionModeConfig.aiStatus != "disabled" &&
+        ["suggest", "both"].includes(aiMode) && (
+          <div className="flex space-x-1 justify-start items-start text-sm mt-2 mb-4 bg-secondary rounded-md py-4 px-2 opacity-60">
+            <div>
+              <BotIcon className="min-w-5 p-1" size="25px"></BotIcon>
+            </div>
+            {suggestionModeConfig.aiData &&
+            suggestionModeConfig.aiStatus != "loading" ? (
+              <>
+                <div className="flex-1">
+                  <code
+                    onClick={() => {
+                      onChange(suggestionModeConfig.aiData?.value);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    {String(suggestionModeConfig.aiData.value)}
+                  </code>
+                  : {suggestionModeConfig.aiData.explanation}
+                </div>
+                <div>
+                  <RefreshCcwIcon
+                    className="cursor-pointer p-1"
+                    size="25px"
+                    onClick={() => {
+                      if (suggestionModeConfig.regenerateAi)
+                        suggestionModeConfig.regenerateAi();
+                    }}
+                  ></RefreshCcwIcon>
+                </div>
+              </>
+            ) : suggestionModeConfig.aiStatus == "loading" ? (
+              <LoaderCircle
+                className="animate-spin opacity-55 min-w-4"
+                size={20}
+              ></LoaderCircle>
+            ) : (
+              <RefreshCcwIcon
+                className="cursor-pointer p-1"
+                size="25px"
+                onClick={() => {
+                  if (suggestionModeConfig.regenerateAi)
+                    suggestionModeConfig.regenerateAi();
+                }}
+              ></RefreshCcwIcon>
+            )}
           </div>
-          {suggestionModeConfig.aiData &&
-          suggestionModeConfig.aiStatus != "loading" ? (
-            <>
-              <div className="flex-1">
-                <code
-                  onClick={() => {
-                    onChange(suggestionModeConfig.aiData?.value);
-                  }}
-                  className="cursor-pointer"
-                >
-                  {String(suggestionModeConfig.aiData.value)}
-                </code>
-                : {suggestionModeConfig.aiData.explanation}
-              </div>
-              <div>
-                <RefreshCcwIcon
-                  className="cursor-pointer p-1"
-                  size="25px"
-                  onClick={() => {
-                    if (suggestionModeConfig.regenerateAi)
-                      suggestionModeConfig.regenerateAi();
-                  }}
-                ></RefreshCcwIcon>
-              </div>
-            </>
-          ) : suggestionModeConfig.aiStatus == "loading" ? (
-            <LoaderCircle
-              className="animate-spin opacity-55 min-w-4"
-              size={20}
-            ></LoaderCircle>
-          ) : (
-            <RefreshCcwIcon
-              className="cursor-pointer p-1"
-              size="25px"
-              onClick={() => {
-                if (suggestionModeConfig.regenerateAi)
-                  suggestionModeConfig.regenerateAi();
-              }}
-            ></RefreshCcwIcon>
-          )}
-        </div>
-      )}
+        )}
     </div>
   );
 };

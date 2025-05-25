@@ -1,6 +1,8 @@
 import { l } from "vite/dist/node/types.d-aGj9QkWt";
 import { getAllEntries, getAllFilteredEntries } from "./database-wrappers";
 import { useSettingsStore } from "./zustand";
+import { UndirectedGraph } from "graphology";
+import { circular, random } from "graphology-layout";
 
 const round = (num: number, decimals: number) => {
   //return Math.round(num * 10 ** decimals) / 10 ** decimals;
@@ -62,7 +64,7 @@ export const geoHeatMap = async (decimals = 3) => {
   return { lats, lngs, zs };
 };
 
-export const aggreateByField = async <T extends {[key: string]: any}>(
+export const aggreateByField = async <T extends { [key: string]: any }>(
   data: T[],
   field: keyof T,
   top = 20
@@ -125,12 +127,105 @@ export const aggregateHighRelevanceLeavesMeshTerms = async (top = 50) => {
     .filter((e) => !!e)
     .filter((e) => e.relevance == "HIGH" && e.name);
 
-console.log(raw);
-
+  console.log(raw);
 
   return aggreateByField(raw, "name", top);
 };
 
 export const geoScannerPoints = async () => {
   return geoHeatMap();
+};
+
+import forceAtlas2 from "graphology-layout-forceatlas2";
+import { color } from "motion/dist/react";
+
+export const meshTermsGraph = async () => {
+  let data = await interalGetEntryData();
+  let graph = new UndirectedGraph();
+
+  const upsertNode = (
+    term: string | undefined,
+    type: string,
+    color: string,
+    initialSize = 1
+  ) => {
+    if (term) {
+      graph.updateNode(term, (attr) => {
+        return {
+          ...attr,
+          size: (attr.size || initialSize) + 0.2,
+          cType: type,
+          color,
+          label: term,
+          x: 0,
+          y: 0,
+        };
+      });
+    }
+  };
+
+  const upsertEdge = (
+    source: string,
+    target: string,
+    color: string = "black"
+  ) => {
+    graph.updateEdge(source, target, (attr) => {
+      return {
+        ...attr,
+        weight: (attr.weight || 0) + 1,
+        color,
+      };
+    });
+  };
+
+  for (let e of data) {
+    let int = e.rawJson?.interventionBrowseModule;
+
+    let id = e.title;
+
+    let repurpose =
+      e.customFieldsData.find(
+        (e) => e.customFieldDefinition.idName == "is_repurpose"
+      )?.value == "true";
+
+    upsertNode(id, "trial", repurpose ? "red" : "blue", repurpose ? 5 : 1);
+
+    int?.meshes?.map((t) => {
+      upsertNode(t.term, "mesh", "green");
+      upsertEdge(id, t.term!, repurpose ? "red" : "black");
+    });
+
+    // e.rawJson?.conditionsModule?.conditions?.map((t) => {
+    //   upsertNode(t, "condition", "grey");
+    //   upsertEdge(id, t, "grey");
+    // });
+
+    //int?.ancestors?.map((t) => upsertNode(t.term, "ancestor"));
+    // int?.browseLeaves?.map((t) => upsertNode(t.name, "leaf"));
+    // int?.browseBranches?.map((t) => upsertNode(t.name, "branch"));
+
+    // int?.meshes?.map((t) => {
+    //   int?.ancestors?.map((t2) => {
+    //     upsertEdge(t.term!, t2.term!);
+    //   });
+    // });
+  }
+
+  random.assign(graph, {
+    scale: 1000,
+  });
+
+  forceAtlas2.assign(graph, {
+    iterations: 2000,
+
+    settings: {
+      gravity: 10,
+      adjustSizes: true,
+      //strongGravityMode: true,
+    },
+  });
+
+  console.log(graph);
+
+  return graph;
 };

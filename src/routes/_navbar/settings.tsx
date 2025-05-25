@@ -16,6 +16,7 @@ import {
   database,
   getAllEntriesWithFlatCustomFields,
   getCustomFields,
+  vacuumDatabase,
 } from "@/lib/database-wrappers";
 import { getKeys, isDev, omit } from "@/lib/utils";
 import EntryFilter from "@/components/EntryFilter";
@@ -36,6 +37,7 @@ import {
   Modal,
   Code,
   Alert,
+  Tooltip,
 } from "@mantine/core";
 import { DEFAULT_AI_MODELS } from "@/lib/langchain";
 import { useStep } from "usehooks-ts";
@@ -142,6 +144,10 @@ export const Route = createFileRoute("/_navbar/settings")({
               {
                 value: "suggest",
                 label: "Suggest",
+              },
+              {
+                value: "both",
+                label: "Suggest and check",
               },
             ]}
             description={
@@ -255,7 +261,9 @@ export const Route = createFileRoute("/_navbar/settings")({
                   }
                 );
 
-                // console.log(allData);
+                
+
+                console.log(allData);
 
                 const csvConfig = mkConfig({
                   useKeysAsHeaders: true,
@@ -301,25 +309,37 @@ export const Route = createFileRoute("/_navbar/settings")({
           </Link>
         </div>
 
-        {isDev() && (
-          <Button
-            onClick={async () => {
-              if (
-                confirm(
-                  "Are you sure you want to clear the database? This cannot be undone."
-                )
-              ) {
-                await database.delete(CustomFieldEntryTable).run();
-                await database.delete(EntryTable).run();
-                await database.delete(CustomFieldTable).run();
-                settingsStore.setOnboardingComplete(false);
-              }
-            }}
-            color="red"
-          >
-            Remove all data from database
-          </Button>
-        )}
+        <Group>
+          <Tooltip label="The VACUUM command rebuilds the database file, repacking it into a minimal amount of disk space.">
+            <Button
+              onClick={async () => {
+                await vacuumDatabase();
+                alert("Database vacuumed");
+              }}
+            >
+              Vacuum database
+            </Button>
+          </Tooltip>
+          {isDev() && (
+            <Button
+              onClick={async () => {
+                if (
+                  confirm(
+                    "Are you sure you want to clear the database? This cannot be undone."
+                  )
+                ) {
+                  await database.delete(CustomFieldEntryTable).run();
+                  await database.delete(EntryTable).run();
+                  await database.delete(CustomFieldTable).run();
+                  settingsStore.setOnboardingComplete(false);
+                }
+              }}
+              color="red"
+            >
+              Remove all data from database
+            </Button>
+          )}
+        </Group>
 
         <Modal
           opened={modalState != "closed"}

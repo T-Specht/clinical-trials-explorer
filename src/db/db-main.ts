@@ -96,6 +96,8 @@ export const runMigrate = async () => {
   );
 
   // https://github.com/drizzle-team/drizzle-orm/issues/1813#issuecomment-2460509578
+  
+  db.run(sql`PRAGMA auto_vacuum = FULL;`)
   db.run(sql`PRAGMA foreign_keys=OFF;`);
   try {
     migrate(db, {

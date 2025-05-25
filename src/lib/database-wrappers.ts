@@ -82,13 +82,23 @@ export const getAllEntries = async () => {
 
 export const getAllEntriesWithFlatCustomFields = async () => {
   const allEntries = await getAllEntries();
+  const allCustomFields = await getCustomFields();
 
   const flat = allEntries.map((e) => ({
     ...e,
-    ...e.customFieldsData.reduce(
-      (acc, c) => ({ ...acc, [c.customFieldDefinition.idName]: c.value }),
+    ...allCustomFields.reduce(
+      (acc, c) => ({
+        ...acc,
+        [c.idName]:
+          e.customFieldsData.find((d) => d.customFieldId == c.id)?.value ||
+          null,
+      }),
       {}
-    ),
+    ), // this is better because it includes all custom fields, even if they are not set for entry
+    // ...e.customFieldsData.reduce(
+    //   (acc, c) => ({ ...acc, [c.customFieldDefinition.idName]: c.value }),
+    //   {}
+    // ),
   }));
 
   // Add derived fields
@@ -327,4 +337,10 @@ export const insertStudiesIntoDatabase = async (
       );
     }
   }
+};
+
+export const vacuumDatabase = async () => {
+  let res = await database.run(sql`VACUUM;`);
+  console.log("Vacuum result:", res);
+  // TODO enable auto vac: PRAGMA auto_vacuum = FULL;
 };

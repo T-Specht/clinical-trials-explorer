@@ -43,7 +43,7 @@ export const CustomFieldTable = sqliteTable("CustomField", {
     .notNull(),
   idName: text("id_name").notNull().unique(),
   dataType: text("data_type", {
-    enum: ["string", "number", "boolean"],
+    enum: ["string", "number", "boolean", "textarea"],
   }).notNull(),
   label: text("label").notNull(),
   aiDescription: text("ai_description"),
